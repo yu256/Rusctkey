@@ -5,10 +5,9 @@ import PostNote from "./components/PostNote";
 import "./App.scss";
 
 function App() {
-
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const instance = localStorage.getItem('instance');
+    const token = localStorage.getItem("token");
+    const instance = localStorage.getItem("instance");
     invoke("set_token", { token });
     invoke("set_instance", { instance });
   }, []);
@@ -23,9 +22,7 @@ function App() {
     <div className="container">
       <h1>Misskey Client</h1>
 
-      <button onClick={logout}>
-        ログアウト
-      </button>
+      <button onClick={logout}>ログアウト</button>
       <GetNote />
       <PostNote />
     </div>

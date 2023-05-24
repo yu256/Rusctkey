@@ -10,11 +10,16 @@ function GetNote() {
   }
 
   function isCustomEmoji(reaction: string): boolean {
-    return reaction.startsWith(':');
+    return reaction.startsWith(":");
   }
 
-  function getCustomEmojiURL(reaction: string): { url: string; alt: string } {
-    const emoji = note!.emojis.find((emoji) => emoji.name === reaction.slice(1, -1));
+  function getCustomEmojiURL(reaction: string): {
+    url: string;
+    alt: string;
+  } {
+    const emoji = note!.emojis.find(
+      (emoji) => emoji.name === reaction.slice(1, -1)
+    );
     return { url: emoji!.url, alt: reaction };
   }
 
@@ -38,58 +43,67 @@ function GetNote() {
             <img src={note.user.avatarUrl} />
           </div>
           <div className="notetext">
-            { note.user.name } { note.user.username }@{ note.user.host }<br />{ note.text }<br />{ note.createdAt }
+            {note.user.name} {note.user.username}@{note.user.host}
+            <br />
+            {note.text}
+            <br />
+            {note.createdAt}
             <br />
             {note.reactions && (
               <div className="emojis">
-                {Object.entries(note.reactions).map(([reaction, count]) => (
-                  <div key={reaction}>
-                    {isCustomEmoji(reaction) ? (
-                      <img src={getCustomEmojiURL(reaction).url} alt={getCustomEmojiURL(reaction).alt} />
-                    ) : (
-                      <span>{reaction}</span>
-                    )}
-                    { count }
-                  </div>
-                ))}
+                {Object.entries(note.reactions).map(
+                  ([reaction, count]) => (
+                    <div key={reaction}>
+                      {isCustomEmoji(reaction) ? (
+                        <img
+                          src={getCustomEmojiURL(reaction).url}
+                          alt={getCustomEmojiURL(reaction).alt}
+                        />
+                      ) : (
+                        <span>{reaction}</span>
+                      )}
+                      {count}
+                    </div>
+                  )
+                )}
               </div>
             )}
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }
 
 interface Note {
-  createdAt: string,
-  user: User,
-  text: string,
-  reactions: Map<string, number>,
-  emojis: Emoji[],
+  createdAt: string;
+  user: User;
+  text: string;
+  reactions: Map<string, number>;
+  emojis: Emoji[];
 }
 
 interface Emoji {
-  name: string,
-  url: string,
-}
-  
-interface User {
-  username: string,
-  host: string | null,
-  name: string,
-  avatarUrl: string,
-  instance: Instance,
-  onlineStatus: string,
-}
-  
-interface Instance {
-  name: string,
-  softwareName: string,
-  softwareVersion: string,
-  iconUrl: string,
-  faviconUrl: string,
-  themeColor: string,
+  name: string;
+  url: string;
 }
 
-export default GetNote
+interface User {
+  username: string;
+  host: string | null;
+  name: string;
+  avatarUrl: string;
+  instance: Instance;
+  onlineStatus: string;
+}
+
+interface Instance {
+  name: string;
+  softwareName: string;
+  softwareVersion: string;
+  iconUrl: string;
+  faviconUrl: string;
+  themeColor: string;
+}
+
+export default GetNote;
