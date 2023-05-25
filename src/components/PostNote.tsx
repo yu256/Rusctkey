@@ -11,6 +11,10 @@ function PostNote() {
       : console.log("投稿失敗");
   }
 
+  function postFile() {
+    invoke("upload_file");
+  }
+
   return (
     <div className="container">
       <form
@@ -26,6 +30,7 @@ function PostNote() {
         />
         <button type="submit">投稿</button>
       </form>
+      <button onClick={postFile}>画像をアップロード</button>
     </div>
   );
 }

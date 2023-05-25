@@ -21,8 +21,10 @@ img {
     align-items: center;
   }
   img {
-    width: 20px;
+    width: auto;
     height: 20px;
+    max-width: 100%;
+    margin-right: 0.4em;
   }
   span {
     margin-right: 5px;
