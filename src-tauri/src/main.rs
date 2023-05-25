@@ -3,14 +3,14 @@
 
 mod models;
 
+use chrono::Local;
 use once_cell::sync::Lazy;
+use reqwest::multipart;
 use serde_json::json;
 use std::fs::File;
-use std::io::Read;
+use std::io::{BufReader, Read};
 use std::sync::RwLock;
 use tauri::api::dialog::FileDialogBuilder;
-use reqwest::multipart;
-use chrono::Local;
 
 static URL: Lazy<RwLock<String>> = Lazy::new(|| RwLock::new("".to_string()));
 static TOKEN: Lazy<RwLock<String>> = Lazy::new(|| RwLock::new("".to_string()));
@@ -84,7 +84,7 @@ fn set_instance(instance: String) {
 }
 
 fn read_file_to_bytes(file_path: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
-    let mut file = File::open(file_path)?;
+    let mut file = BufReader::new(File::open(file_path)?);
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer)?;
     Ok(buffer)
@@ -96,7 +96,7 @@ async fn upload_file() {
     let url: String = URL.read().unwrap().clone();
     let access_token: String = TOKEN.read().unwrap().clone();
 
-    FileDialogBuilder::new().pick_files(move |file_paths| {
+    FileDialogBuilder::new().pick_files(move |file_paths: Option<Vec<std::path::PathBuf>>| {
         match file_paths {
             Some(v) => {
                 let mut pathstr = "".to_string();
@@ -113,11 +113,13 @@ async fn upload_file() {
                 let file_bytes = read_file_to_bytes(&pathstr).unwrap();
                 let now = Local::now().format("%Y%m%d-%H:%M:%S");
 
-                let form: multipart::Form = multipart::Form::new()
-                    .text("i", access_token)
-                    .part("file", multipart::Part::bytes(file_bytes).file_name(format!("{}", now)));
+                let form: multipart::Form = multipart::Form::new().text("i", access_token).part(
+                    "file",
+                    multipart::Part::bytes(file_bytes).file_name(format!("{}", now)),
+                );
                 async_std::task::spawn(async move {
-                    /*let response = */client
+                    /*let response = */
+                    client
                         .post(&format!("{}api/drive/files/create", url))
                         .multipart(form)
                         .send()
