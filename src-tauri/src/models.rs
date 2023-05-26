@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
 #[allow(non_snake_case)]
 pub struct Note {
     pub createdAt: String,
@@ -32,4 +31,10 @@ pub struct Instance {
     pub iconUrl: String,
     pub faviconUrl: String,
     pub themeColor: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[allow(non_snake_case)]
+pub struct DriveFile {
+    pub id: String,
 }

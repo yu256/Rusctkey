@@ -83,57 +83,62 @@ fn set_instance(instance: String) {
     *URL.write().unwrap() = temp_url;
 }
 
-fn read_file_to_bytes(file_path: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
-    let mut file = BufReader::new(File::open(file_path)?);
+fn read_file_to_bytes(file_path: std::path::PathBuf) -> Vec<u8> {
+    let mut file = BufReader::new(File::open(file_path).unwrap());
     let mut buffer = Vec::new();
-    file.read_to_end(&mut buffer)?;
-    Ok(buffer)
+    file.read_to_end(&mut buffer).unwrap();
+    buffer
 }
 
 #[tauri::command]
-async fn upload_file() {
+async fn upload_file() -> Vec<String> {
     let client: reqwest::Client = reqwest::Client::new();
     let url: String = URL.read().unwrap().clone();
-    let access_token: String = TOKEN.read().unwrap().clone();
+    let (file_id_tx, file_id_rx) = async_std::channel::bounded(1);
+
+    let handle = async_std::task::spawn(async move {
+        let mut file_id: Vec<String> = Vec::new();
+        while let Ok(res) = file_id_rx.recv().await {
+            file_id.extend(res);
+        }
+        file_id
+    });
 
     FileDialogBuilder::new().pick_files(move |file_paths: Option<Vec<std::path::PathBuf>>| {
         match file_paths {
             Some(v) => {
-                let mut pathstr = "".to_string();
-                match v.first() {
-                    Some(path) => match path.to_str() {
-                        Some(s) => {
-                            pathstr = s.to_string();
-                        }
-                        _ => {}
-                    },
-                    _ => {}
-                }
-
-                let file_bytes = read_file_to_bytes(&pathstr).unwrap();
-                let now = Local::now().format("%Y%m%d-%H:%M:%S");
-
-                let form: multipart::Form = multipart::Form::new().text("i", access_token).part(
-                    "file",
-                    multipart::Part::bytes(file_bytes).file_name(format!("{}", now)),
-                );
                 async_std::task::spawn(async move {
-                    /*let response = */
-                    client
-                        .post(&format!("{}api/drive/files/create", url))
-                        .multipart(form)
-                        .send()
-                        .await
-                        .unwrap();
+                    let mut file_id: Vec<String> = Vec::new();
+                    for path in v {
+                        let access_token: String = TOKEN.read().unwrap().clone();
+                        let file_bytes = read_file_to_bytes(path);
+                        let now = Local::now().format("%Y%m%d-%H:%M:%S");
 
-                    // // レスポンスの内容を表示
-                    // let response_text = response.text().await.unwrap();
-                    // println!("{}", response_text);
+                        let form: multipart::Form = multipart::Form::new().text("i", access_token).part(
+                            "file",
+                            multipart::Part::bytes(file_bytes).file_name(format!("{}", now)),
+                        );
+
+                        let res: models::DriveFile = client
+                            .post(&format!("{}api/drive/files/create", url))
+                            .multipart(form)
+                            .send()
+                            .await
+                            .unwrap()
+                            .json()
+                            .await
+                            .unwrap();
+
+                        file_id.push(res.id);
+                    }
+                    let _ = file_id_tx.send(file_id).await;
                 });
             }
             _ => {}
         }
-    })
+    });
+
+    handle.await
 }
 
 fn main() {
