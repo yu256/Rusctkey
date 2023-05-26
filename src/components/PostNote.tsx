@@ -16,7 +16,7 @@ function PostNote() {
   }
 
   return (
-    <div className="container">
+    <div>
       <form
         onSubmit={(e) => {
           e.preventDefault();

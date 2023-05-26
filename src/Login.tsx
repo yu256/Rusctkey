@@ -11,9 +11,7 @@ function Login() {
   }
 
   return (
-    <div className="container">
-      <h1>Misskey Client</h1>
-
+    <div>
       <form
         onSubmit={(e) => {
           e.preventDefault();

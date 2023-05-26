@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import GetNote from "./components/GetNote";
 import PostNote from "./components/PostNote";
-import "./App.scss";
 
 function App() {
   useEffect(() => {
@@ -19,9 +18,7 @@ function App() {
   }
 
   return (
-    <div className="container">
-      <h1>Misskey Client</h1>
-
+    <div>
       <button onClick={logout}>ログアウト</button>
       <GetNote />
       <PostNote />

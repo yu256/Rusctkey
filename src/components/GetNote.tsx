@@ -38,29 +38,34 @@ function GetNote() {
         <button type="submit">Get</button>
       </form>
       {note && (
-        <div className="note">
-          <div className="icon">
+        <div className="border-2 p-5 rounded-3xl border-black">
+          <div className="w-20 float-left">
             <img src={note.user.avatarUrl} />
           </div>
-          <div className="notetext">
-            {note.user.name} {note.user.username}@{note.user.host}
+          <div className="ml-10">
+            {note.user.name} {note.user.username}
+            {note.user.host && `@${note.user.host}`}
             <br />
             {note.text}
             <br />
             {note.createdAt}
             <br />
             {note.reactions && (
-              <div className="emojis">
+              <div className="flex gap-1">
                 {Object.entries(note.reactions).map(
                   ([reaction, count]) => (
-                    <div key={reaction}>
+                    <div
+                      key={reaction}
+                      className="flex items-center mt-2"
+                    >
                       {isCustomEmoji(reaction) ? (
                         <img
+                          className="w-auto h-5 max-w-full mr-1"
                           src={getCustomEmojiURL(reaction).url}
                           alt={getCustomEmojiURL(reaction).alt}
                         />
                       ) : (
-                        <span>{reaction}</span>
+                        <span className="mr-1">{reaction}</span>
                       )}
                       {count}
                     </div>
