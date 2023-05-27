@@ -69,7 +69,7 @@ function RenderNote({ note }: Props): JSX.Element {
         <br />
         {TextWithImages(note.text, false)}
         <br />
-        {note.files[0].properties.width && (
+        {note.files && (
           <div className="flex">
             {note.files.map((file, index) => (
               <div>

@@ -15,10 +15,10 @@ interface Files {
   md5: string;
   size: number;
   isSensitive: boolean;
-  blurhash: string;
+  blurhash?: string;
   properties: Properties;
   url: string;
-  thumbnailUrl: string;
+  thumbnailUrl?: string;
   comment?: string;
   folderId?: string;
   folder?: string;
@@ -27,8 +27,8 @@ interface Files {
 }
 
 interface Properties {
-  width: number;
-  height: number;
+  width?: number;
+  height?: number;
 }
 
 export interface Emoji {

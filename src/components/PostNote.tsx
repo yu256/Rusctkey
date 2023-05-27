@@ -1,8 +1,7 @@
 import { invoke } from "@tauri-apps/api";
-import { useState } from "react";
 
 function PostNote() {
-  const [text, setNote] = useState("");
+  let text: string;
 
   async function post() {
     const form = document.getElementById("form") as HTMLInputElement;
@@ -26,7 +25,7 @@ function PostNote() {
         <input
           autoComplete="off"
           id="form"
-          onChange={(e) => setNote(e.currentTarget.value)}
+          onChange={(e) => text = e.currentTarget.value}
           placeholder="ノート内容"
         />
         <button type="submit">投稿</button>

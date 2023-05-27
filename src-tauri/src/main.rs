@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod models;
+use crate::models::Note;
 
 use chrono::Local;
 use once_cell::sync::Lazy;
@@ -21,14 +22,14 @@ fn extract_noteid(note_id: String) -> String {
 }
 
 #[tauri::command]
-async fn get_note(note_id: String) -> models::Note {
+async fn get_note(note_id: String) -> Note {
     let extracted_note_id: String = extract_noteid(note_id);
     let client: reqwest::Client = reqwest::Client::new();
     let url: String = URL.read().unwrap().clone();
     let access_token: String = TOKEN.read().unwrap().clone();
 
-    let res: models::Note = client
-        .post(&format!("{}api/notes/show", url))
+    let res: Note = client
+        .post(&format!("https://{}/api/notes/show", url))
         .json(&json!({ "i": access_token, "noteId": extracted_note_id }))
         .send()
         .await
@@ -46,7 +47,7 @@ async fn post(text: String) -> bool {
     let access_token: String = TOKEN.read().unwrap().clone();
 
     let res: Result<reqwest::Response, reqwest::Error> = client
-        .post(&format!("{}api/notes/create", url))
+        .post(&format!("https://{}/api/notes/create", url))
         .json(&json!({ "i": access_token, "text": text }))
         .send()
         .await;
@@ -63,24 +64,15 @@ fn set_token(token: String) {
 }
 
 #[tauri::command]
-fn set_instance(instance: String) {
-    let temp_url: String = match instance.as_str() {
-        s if s.starts_with("https://") => {
-            if instance.ends_with('/') {
-                instance
-            } else {
-                instance + "/"
-            }
-        }
-        _ => {
-            if instance.ends_with('/') {
-                "https://".to_string() + &instance
-            } else {
-                "https://".to_string() + &instance + "/"
-            }
-        }
+fn set_instance(instance: &str) {
+    let sliced_url = if instance.starts_with("https://") && instance.ends_with('/') {
+        &instance[8..instance.len() - 1]
+    } else if instance.starts_with("https://") {
+        &instance[8..]
+    } else {
+        instance
     };
-    *URL.write().unwrap() = temp_url;
+    *URL.write().unwrap() = sliced_url.to_string();
 }
 
 fn read_file_to_bytes(file_path: std::path::PathBuf) -> Vec<u8> {
@@ -120,7 +112,7 @@ async fn upload_file() -> Vec<String> {
                         );
 
                         let res: models::DriveFile = client
-                            .post(&format!("{}api/drive/files/create", url))
+                            .post(&format!("https://{}/api/drive/files/create", url))
                             .multipart(form)
                             .send()
                             .await

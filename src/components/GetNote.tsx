@@ -4,7 +4,7 @@ import { useState } from "react";
 import RenderNote from "./RenderNote";
 
 function GetNote() {
-  const [noteId, setNoteId] = useState("");
+  let noteId: string;
   const [note, getNote] = useState<Note>();
 
   async function get() {
@@ -20,7 +20,7 @@ function GetNote() {
         }}
       >
         <input
-          onChange={(e) => setNoteId(e.currentTarget.value)}
+          onChange={(e) => noteId = e.currentTarget.value}
           placeholder="ノートのURL"
         />
         <button type="submit">Get</button>
