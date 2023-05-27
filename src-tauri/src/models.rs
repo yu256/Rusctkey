@@ -8,7 +8,35 @@ pub struct Note {
     pub user: User,
     pub text: String,
     pub reactions: HashMap<String, usize>,
-    pub emojis: Vec<HashMap<String, String>>,
+    pub emojis: Vec<Emojis>,
+    pub files: Vec<Files>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[allow(non_snake_case)]
+pub struct Files {
+    pub id: String,
+    pub createdAt: String,
+    pub name: String,
+    pub r#type: String,
+    pub md5: String,
+    pub size: u8,
+    pub isSensitive: bool,
+    pub blurhash: Option<String>,
+    pub properties: Properties,
+    pub url: String,
+    pub thumbnailUrl: Option<String>,
+    pub comment: Option<String>,
+    pub folderId: Option<String>,
+    pub folder: Option<String>,
+    pub userId: Option<String>,
+    pub user: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Properties {
+    pub width: Option<u32>,
+    pub height: Option<u32>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -20,6 +48,13 @@ pub struct User {
     pub avatarUrl: String,
     pub instance: Option<Instance>,
     pub onlineStatus: Option<String>,
+    pub emojis: Vec<Emojis>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Emojis {
+    pub name: String,
+    pub url: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

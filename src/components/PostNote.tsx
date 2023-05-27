@@ -24,6 +24,7 @@ function PostNote() {
         }}
       >
         <input
+          autoComplete="off"
           id="form"
           onChange={(e) => setNote(e.currentTarget.value)}
           placeholder="ノート内容"
