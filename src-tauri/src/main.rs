@@ -45,6 +45,58 @@ fn format_datetime(datetime_str: &str) -> String {
 }
 
 #[tauri::command]
+async fn get_timeline() -> Vec<Note> {
+    let client: reqwest::Client = reqwest::Client::new();
+    let url: String = URL.read().unwrap().clone();
+    let access_token: String = TOKEN.read().unwrap().clone();
+
+    let mut res: Vec<Note> = client
+        .post(&format!("https://{}/api/notes/timeline", url))
+        .json(&json!({ "i": access_token, "limit": 20 }))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+
+    for note in &mut res {
+        note.modifiedCreatedAt = Some(format_datetime(&note.createdAt));
+        if let Some(ref mut renote) = &mut note.renote {
+            renote.modifiedCreatedAt = Some(format_datetime(&renote.createdAt));
+        }
+    }
+
+    res
+}
+
+#[tauri::command]
+async fn pagination(id: String) -> Vec<Note> {
+    let client: reqwest::Client = reqwest::Client::new();
+    let url: String = URL.read().unwrap().clone();
+    let access_token: String = TOKEN.read().unwrap().clone();
+
+    let mut res: Vec<Note> = client
+        .post(&format!("https://{}/api/notes/timeline", url))
+        .json(&json!({ "i": access_token, "limit": 20, "untilId": id }))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+
+    for note in &mut res {
+        note.modifiedCreatedAt = Some(format_datetime(&note.createdAt));
+        if let Some(ref mut renote) = &mut note.renote {
+            renote.modifiedCreatedAt = Some(format_datetime(&renote.createdAt));
+        }
+    }
+
+    res
+}
+
+#[tauri::command]
 async fn get_note(note_id: String) -> Note {
     let extracted_note_id: String = extract_noteid(note_id);
     let client: reqwest::Client = reqwest::Client::new();
@@ -170,7 +222,9 @@ fn main() {
             set_token,
             set_instance,
             post,
-            upload_file
+            upload_file,
+            get_timeline,
+            pagination
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

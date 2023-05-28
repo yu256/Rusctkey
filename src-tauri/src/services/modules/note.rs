@@ -4,6 +4,7 @@ use std::collections::HashMap;
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Note {
+    pub id: String,
     pub createdAt: String,
     pub modifiedCreatedAt: Option<String>,
     pub user: User,
@@ -17,6 +18,7 @@ pub struct Note {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Renote {
+    pub id: String,
     pub createdAt: String,
     pub modifiedCreatedAt: Option<String>,
     pub user: User,
