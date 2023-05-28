@@ -19,7 +19,6 @@ function Timeline() {
     if (notes.length === 0) return;
 
     const lastNoteId = notes[notes.length - 1].id;
-    console.log(lastNoteId);
     const newNotes = await invoke<Note[]>("pagination", {
       id: lastNoteId,
     });

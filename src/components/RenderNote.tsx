@@ -29,7 +29,21 @@ function RenderNote({ note }: Props): JSX.Element {
     return matchedEmoji ? matchedEmoji.url : undefined;
   }
 
-  const parsedText = (text: string, isUsername: boolean) => {
+  function getCustomEmojiURLinRenotedText(
+    name: string,
+    isUsername: boolean
+  ): string | undefined {
+    const matchedEmoji = isUsername
+      ? note.renote!.user.emojis.find((emoji) => emoji.name === name)
+      : note.renote!.emojis.find((emoji) => emoji.name === name);
+    return matchedEmoji ? matchedEmoji.url : undefined;
+  }
+
+  const parsedText = (
+    text: string,
+    isUsername: boolean,
+    isRenoted: boolean
+  ) => {
     const parseText = (text: string) => {
       const regex = /:(.*?):/g;
       const matches = text.match(regex);
@@ -38,11 +52,18 @@ function RenderNote({ note }: Props): JSX.Element {
         const parts = text.split(regex);
         return parts.map((part, index) => {
           if (matches.includes(`:${part}:`)) {
-            return (
+            return !isRenoted ? (
               <img
                 key={index}
                 src={getCustomEmojiURLinText(part, isUsername)}
-                alt=":${part}:"
+                alt={`:${part}:`}
+                className="h-4 inline"
+              />
+            ) : (
+              <img
+                key={index}
+                src={getCustomEmojiURLinRenotedText(part, isUsername)}
+                alt={`:${part}:`}
                 className="h-4 inline"
               />
             );
@@ -59,7 +80,7 @@ function RenderNote({ note }: Props): JSX.Element {
   };
 
   return (
-    <div className="min-h-[7em] border-2 p-3 ml-1 mr-1 rounded-3xl border-black border-dashed relative">
+    <div className="min-h-[7em] border-2 p-3 m-1 rounded-3xl border-black border-dashed relative">
       <div className="w-20 float-left">
         <img src={note.user.avatarUrl} className="rounded-full" />
       </div>
@@ -70,7 +91,8 @@ function RenderNote({ note }: Props): JSX.Element {
         <div className="text-left">
           {parsedText(
             note.user.name ? note.user.name : note.user.username,
-            true
+            true,
+            false
           )}
           <span className="text-gray-400 ml-2">
             {note.user.username}
@@ -78,18 +100,20 @@ function RenderNote({ note }: Props): JSX.Element {
           </span>
           <br />
           {note.text && (
-            <div className="mt-1">{parsedText(note.text, false)}</div>
+            <div className="mt-1">
+              {parsedText(note.text, false, false)}
+            </div>
           )}
         </div>
         {note.files && (
           <div className="flex">
             {note.files.map((file, index) => (
-              <div>
+              <div className="m-1 relative w-64 h-36 bg-gray-500">
                 <img
                   key={index}
                   src={file.url}
                   alt={file.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain absolute"
                 />
               </div>
             ))}
@@ -112,28 +136,30 @@ function RenderNote({ note }: Props): JSX.Element {
                   note.renote.user.name
                     ? note.renote.user.name
                     : note.renote.user.username,
+                  true,
                   true
                 )}
                 <span className="text-gray-400 ml-2">
                   {note.renote.user.username}
-                  {note.renote.user.host && `@${note.renote.user.host}`}
+                  {note.renote.user.host &&
+                    `@${note.renote.user.host}`}
                 </span>
                 <br />
                 {note.renote.text && (
                   <div className="mt-1">
-                    {parsedText(note.renote.text, false)}
+                    {parsedText(note.renote.text, false, true)}
                   </div>
                 )}
               </div>
               {note.renote.files && (
                 <div className="flex">
                   {note.renote.files.map((file, index) => (
-                    <div>
+                    <div className="m-1 relative w-64 h-36 bg-gray-500">
                       <img
                         key={index}
                         src={file.url}
                         alt={file.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain absolute"
                       />
                     </div>
                   ))}

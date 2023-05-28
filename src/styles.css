@@ -17,6 +17,8 @@
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
   text-align: center;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
 input,
