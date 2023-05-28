@@ -4,7 +4,7 @@
 mod services;
 use crate::{services::DriveFile, services::Note};
 
-use chrono::Local;
+use chrono::{DateTime, Local, Duration, Datelike};
 use once_cell::sync::Lazy;
 use reqwest::multipart;
 use serde_json::json;
@@ -21,6 +21,29 @@ fn extract_noteid(note_id: String) -> String {
     temp_id[4].to_string()
 }
 
+fn format_datetime(datetime_str: &str) -> String {
+    let datetime = datetime_str
+        .parse::<DateTime<Local>>()
+        .unwrap();
+
+    let current_datetime = Local::now();
+    let duration = current_datetime.signed_duration_since(datetime);
+
+    if datetime.year() != current_datetime.year() {
+        datetime.format("%Y/%m/%d").to_string()
+    } else if duration >= Duration::days(4) {
+        datetime.format("%m/%d").to_string()
+    } else if duration >= Duration::days(1) {
+        format!("{}日前", duration.num_days())
+    } else if duration >= Duration::hours(1) {
+        format!("{}時間前", duration.num_hours())
+    } else if duration >= Duration::minutes(1) {
+        format!("{}分前", duration.num_minutes())
+    } else {
+        format!("{}秒前", duration.num_seconds())
+    }
+}
+
 #[tauri::command]
 async fn get_note(note_id: String) -> Note {
     let extracted_note_id: String = extract_noteid(note_id);
@@ -28,7 +51,7 @@ async fn get_note(note_id: String) -> Note {
     let url: String = URL.read().unwrap().clone();
     let access_token: String = TOKEN.read().unwrap().clone();
 
-    let res: Note = client
+    let mut res: Note = client
         .post(&format!("https://{}/api/notes/show", url))
         .json(&json!({ "i": access_token, "noteId": extracted_note_id }))
         .send()
@@ -37,6 +60,9 @@ async fn get_note(note_id: String) -> Note {
         .json()
         .await
         .unwrap();
+
+    res.modifiedCreatedAt = Some(format_datetime(&res.createdAt));
+
     res
 }
 

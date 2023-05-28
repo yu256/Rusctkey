@@ -5,6 +5,7 @@ use std::collections::HashMap;
 #[allow(non_snake_case)]
 pub struct Note {
     pub createdAt: String,
+    pub modifiedCreatedAt: Option<String>,
     pub user: User,
     pub text: String,
     pub reactions: HashMap<String, usize>,
@@ -44,7 +45,7 @@ pub struct Properties {
 pub struct User {
     pub username: String,
     pub host: Option<String>,
-    pub name: String,
+    pub name: Option<String>,
     pub avatarUrl: String,
     pub instance: Option<Instance>,
     pub onlineStatus: Option<String>,

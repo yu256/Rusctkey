@@ -1,5 +1,6 @@
 export interface Note {
   createdAt: string;
+  modifiedCreatedAt: string;
   user: User;
   text: string;
   reactions: Map<string, number>;
@@ -10,7 +11,7 @@ export interface Note {
 interface Files {
   id: string;
   createdAt: string;
-  name: string;
+  name?: string;
   type: string;
   md5: string;
   size: number;
