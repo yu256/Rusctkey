@@ -2,7 +2,18 @@ export interface Note {
   createdAt: string;
   modifiedCreatedAt: string;
   user: User;
-  text: string;
+  text?: string;
+  reactions: Map<string, number>;
+  emojis: Emoji[];
+  files: Files[];
+  renote?: Renote;
+}
+
+interface Renote {
+  createdAt: string;
+  modifiedCreatedAt: string;
+  user: User;
+  text?: string;
   reactions: Map<string, number>;
   emojis: Emoji[];
   files: Files[];
@@ -32,12 +43,12 @@ interface Properties {
   height?: number;
 }
 
-export interface Emoji {
+interface Emoji {
   name: string;
   url: string;
 }
 
-export interface User {
+interface User {
   username: string;
   host?: string;
   name: string;
@@ -47,7 +58,7 @@ export interface User {
   emojis: Emoji[];
 }
 
-export interface Instance {
+interface Instance {
   name: string;
   softwareName: string;
   softwareVersion: string;

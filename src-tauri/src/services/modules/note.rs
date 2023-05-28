@@ -7,7 +7,20 @@ pub struct Note {
     pub createdAt: String,
     pub modifiedCreatedAt: Option<String>,
     pub user: User,
-    pub text: String,
+    pub text: Option<String>,
+    pub reactions: HashMap<String, usize>,
+    pub emojis: Vec<Emojis>,
+    pub files: Vec<Files>,
+    pub renote: Option<Renote>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[allow(non_snake_case)]
+pub struct Renote {
+    pub createdAt: String,
+    pub modifiedCreatedAt: Option<String>,
+    pub user: User,
+    pub text: Option<String>,
     pub reactions: HashMap<String, usize>,
     pub emojis: Vec<Emojis>,
     pub files: Vec<Files>,

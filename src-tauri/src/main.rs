@@ -62,6 +62,9 @@ async fn get_note(note_id: String) -> Note {
         .unwrap();
 
     res.modifiedCreatedAt = Some(format_datetime(&res.createdAt));
+    if let Some(ref mut renote) = &mut res.renote {
+        renote.modifiedCreatedAt = Some(format_datetime(&renote.createdAt));
+    }
 
     res
 }

@@ -71,13 +71,15 @@ function RenderNote({ note }: Props): JSX.Element {
           {parsedText(
             note.user.name ? note.user.name : note.user.username,
             true
-          )}{" "}
-          <span className="text-gray-400">
+          )}
+          <span className="text-gray-400 ml-2">
             {note.user.username}
             {note.user.host && `@${note.user.host}`}
           </span>
           <br />
-          <div className="mt-1">{parsedText(note.text, false)}</div>
+          {note.text && (
+            <div className="mt-1">{parsedText(note.text, false)}</div>
+          )}
         </div>
         {note.files && (
           <div className="flex">
@@ -91,6 +93,53 @@ function RenderNote({ note }: Props): JSX.Element {
                 />
               </div>
             ))}
+          </div>
+        )}
+        {note.renote && (
+          <div className="min-h-[7em] border-2 p-3 ml-1 mr-1 rounded-3xl border-black border-dashed relative">
+            <div className="w-20 float-left">
+              <img
+                src={note.renote.user.avatarUrl}
+                className="rounded-full"
+              />
+            </div>
+            <div className="absolute right-3 top-3">
+              {note.renote.modifiedCreatedAt}
+            </div>
+            <div className="ml-24">
+              <div className="text-left">
+                {parsedText(
+                  note.renote.user.name
+                    ? note.renote.user.name
+                    : note.renote.user.username,
+                  true
+                )}
+                <span className="text-gray-400 ml-2">
+                  {note.renote.user.username}
+                  {note.renote.user.host && `@${note.renote.user.host}`}
+                </span>
+                <br />
+                {note.renote.text && (
+                  <div className="mt-1">
+                    {parsedText(note.renote.text, false)}
+                  </div>
+                )}
+              </div>
+              {note.renote.files && (
+                <div className="flex">
+                  {note.renote.files.map((file, index) => (
+                    <div>
+                      <img
+                        key={index}
+                        src={file.url}
+                        alt={file.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
         {note.reactions && (
