@@ -25,7 +25,7 @@ function PostNote() {
         <input
           autoComplete="off"
           id="form"
-          onChange={(e) => text = e.currentTarget.value}
+          onChange={(e) => (text = e.currentTarget.value)}
           placeholder="ノート内容"
         />
         <button type="submit">投稿</button>

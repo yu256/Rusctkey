@@ -42,18 +42,16 @@ button:active {
   background-color: #e8e8e8;
 }
 
-
 body {
   --sb-track-color: #63375c;
   --sb-thumb-color: #ff83dd;
   --sb-size: 10px;
 
-  scrollbar-color: var(--sb-thumb-color) 
-                   var(--sb-track-color);
+  scrollbar-color: var(--sb-thumb-color) var(--sb-track-color);
 }
 
 body::-webkit-scrollbar {
-  width: var(--sb-size) 
+  width: var(--sb-size);
 }
 
 body::-webkit-scrollbar-track {

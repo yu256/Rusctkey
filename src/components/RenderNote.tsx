@@ -29,7 +29,7 @@ function RenderNote({ note }: Props): JSX.Element {
     return matchedEmoji ? matchedEmoji.url : undefined;
   }
 
-  const TextWithImages = (text: string, isUsername: boolean) => {
+  const parsedText = (text: string, isUsername: boolean) => {
     const parseText = (text: string) => {
       const regex = /:(.*?):/g;
       const matches = text.match(regex);
@@ -59,16 +59,26 @@ function RenderNote({ note }: Props): JSX.Element {
   };
 
   return (
-    <div className="border-2 p-5 ml-1 mr-1 rounded-3xl border-black border-dashed relative">
+    <div className="min-h-[7em] border-2 p-3 ml-1 mr-1 rounded-3xl border-black border-dashed relative">
       <div className="w-20 float-left">
         <img src={note.user.avatarUrl} className="rounded-full" />
       </div>
-      <div className="absolute right-5 top-5">{note.modifiedCreatedAt}</div>
-      <div className="ml-10">
-        {TextWithImages(note.user.name ? note.user.name : note.user.username, true)} {note.user.username}
-        {note.user.host && `@${note.user.host}`}
-        <br />
-        {TextWithImages(note.text, false)}
+      <div className="absolute right-3 top-3">
+        {note.modifiedCreatedAt}
+      </div>
+      <div className="ml-24">
+        <div className="text-left">
+          {parsedText(
+            note.user.name ? note.user.name : note.user.username,
+            true
+          )}{" "}
+          <span className="text-gray-400">
+            {note.user.username}
+            {note.user.host && `@${note.user.host}`}
+          </span>
+          <br />
+          <div className="mt-1">{parsedText(note.text, false)}</div>
+        </div>
         {note.files && (
           <div className="flex">
             {note.files.map((file, index) => (

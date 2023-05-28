@@ -16,7 +16,7 @@ function GetNote() {
         }}
       >
         <input
-          onChange={(e) => noteId = e.currentTarget.value}
+          onChange={(e) => (noteId = e.currentTarget.value)}
           placeholder="ノートのURL"
         />
         <button type="submit">Get</button>
