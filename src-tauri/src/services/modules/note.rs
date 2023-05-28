@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
@@ -20,7 +20,7 @@ pub struct Files {
     pub name: String,
     pub r#type: String,
     pub md5: String,
-    pub size: u8,
+    pub size: u32,
     pub isSensitive: bool,
     pub blurhash: Option<String>,
     pub properties: Properties,
@@ -66,10 +66,4 @@ pub struct Instance {
     pub iconUrl: String,
     pub faviconUrl: String,
     pub themeColor: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
-pub struct DriveFile {
-    pub id: String,
 }

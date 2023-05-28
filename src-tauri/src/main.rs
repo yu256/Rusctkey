@@ -1,8 +1,8 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod models;
-use crate::models::Note;
+mod services;
+use crate::{services::DriveFile, services::Note};
 
 use chrono::Local;
 use once_cell::sync::Lazy;
@@ -106,12 +106,13 @@ async fn upload_file() -> Vec<String> {
                         let file_bytes = read_file_to_bytes(path);
                         let now = Local::now().format("%Y%m%d-%H:%M:%S");
 
-                        let form: multipart::Form = multipart::Form::new().text("i", access_token).part(
-                            "file",
-                            multipart::Part::bytes(file_bytes).file_name(format!("{}", now)),
-                        );
+                        let form: multipart::Form =
+                            multipart::Form::new().text("i", access_token).part(
+                                "file",
+                                multipart::Part::bytes(file_bytes).file_name(format!("{}", now)),
+                            );
 
-                        let res: models::DriveFile = client
+                        let res: DriveFile = client
                             .post(&format!("https://{}/api/drive/files/create", url))
                             .multipart(form)
                             .send()

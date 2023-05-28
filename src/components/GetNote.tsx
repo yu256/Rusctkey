@@ -7,16 +7,12 @@ function GetNote() {
   let noteId: string;
   const [note, getNote] = useState<Note>();
 
-  async function get() {
-    getNote(await invoke<Note>("get_note", { noteId }));
-  }
-
   return (
     <div>
       <form
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault();
-          get();
+          getNote(await invoke<Note>("get_note", { noteId }));
         }}
       >
         <input

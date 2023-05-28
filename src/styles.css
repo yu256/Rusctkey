@@ -9,7 +9,7 @@
   font-weight: 400;
 
   color: #0f0f0f;
-  background-color: #f6f6f6;
+  background-color: #f4d7ee;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -40,4 +40,27 @@ button:hover {
 button:active {
   border-color: #396cd8;
   background-color: #e8e8e8;
+}
+
+
+body {
+  --sb-track-color: #63375c;
+  --sb-thumb-color: #ff83dd;
+  --sb-size: 10px;
+
+  scrollbar-color: var(--sb-thumb-color) 
+                   var(--sb-track-color);
+}
+
+body::-webkit-scrollbar {
+  width: var(--sb-size) 
+}
+
+body::-webkit-scrollbar-track {
+  background: var(--sb-track-color);
+}
+
+body::-webkit-scrollbar-thumb {
+  background: var(--sb-thumb-color);
+  border-radius: 10px;
 }

@@ -59,9 +59,9 @@ function RenderNote({ note }: Props): JSX.Element {
   };
 
   return (
-    <div className="border-2 p-5 rounded-3xl border-black">
+    <div className="border-2 p-5 ml-1 mr-1 rounded-3xl border-black border-dashed">
       <div className="w-20 float-left">
-        <img src={note.user.avatarUrl} />
+        <img src={note.user.avatarUrl} className="rounded-full" />
       </div>
       <div className="ml-10">
         {TextWithImages(note.user.name, true)} {note.user.username}
