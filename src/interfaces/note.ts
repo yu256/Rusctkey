@@ -62,8 +62,8 @@ interface User {
 
 interface Instance {
   name: string;
-  softwareName: string;
-  softwareVersion: string;
+  softwareName?: string;
+  softwareVersion?: string;
   iconUrl: string;
   faviconUrl: string;
   themeColor: string;

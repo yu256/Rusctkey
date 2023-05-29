@@ -77,8 +77,8 @@ pub struct Emojis {
 #[allow(non_snake_case)]
 pub struct Instance {
     pub name: String,
-    pub softwareName: String,
-    pub softwareVersion: String,
+    pub softwareName: Option<String>,
+    pub softwareVersion: Option<String>,
     pub iconUrl: String,
     pub faviconUrl: String,
     pub themeColor: String,
