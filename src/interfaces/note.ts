@@ -1,5 +1,5 @@
 export interface Note {
-  id: String;
+  id: string;
   createdAt: string;
   modifiedCreatedAt: string;
   user: User;
@@ -11,7 +11,7 @@ export interface Note {
 }
 
 interface Renote {
-  id: String;
+  id: string;
   createdAt: string;
   modifiedCreatedAt: string;
   user: User;

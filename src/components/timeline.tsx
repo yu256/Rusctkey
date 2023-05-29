@@ -44,7 +44,7 @@ function Timeline() {
   return (
     <div className="list-none">
       {notes.map((note) => (
-        <li key={String(note.id)}>
+        <li key={note.id}>
           <RenderNote note={note} />
         </li>
       ))}

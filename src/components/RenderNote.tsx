@@ -82,7 +82,10 @@ function RenderNote({ note }: Props): JSX.Element {
   return (
     <div className="min-h-[7em] border-2 p-3 m-1 rounded-3xl border-black border-dashed relative">
       <div className="w-20 float-left">
-        <img src={note.user.avatarUrl} className="rounded-full" />
+        <img
+          src={note.user.avatarUrl}
+          className="rounded-full aspect-square"
+        />
       </div>
       <div className="absolute right-3 top-3">
         {note.modifiedCreatedAt}
@@ -108,7 +111,10 @@ function RenderNote({ note }: Props): JSX.Element {
         {note.files && (
           <div className="flex">
             {note.files.map((file, index) => (
-              <div className="m-1 relative w-64 h-36 bg-gray-500">
+              <div
+                key={index}
+                className="m-1 relative w-64 h-36 bg-gray-500"
+              >
                 <img
                   key={index}
                   src={file.url}
@@ -124,7 +130,7 @@ function RenderNote({ note }: Props): JSX.Element {
             <div className="w-20 float-left">
               <img
                 src={note.renote.user.avatarUrl}
-                className="rounded-full"
+                className="rounded-full aspect-square"
               />
             </div>
             <div className="absolute right-3 top-3">
@@ -154,7 +160,10 @@ function RenderNote({ note }: Props): JSX.Element {
               {note.renote.files && (
                 <div className="flex">
                   {note.renote.files.map((file, index) => (
-                    <div className="m-1 relative w-64 h-36 bg-gray-500">
+                    <div
+                      key={index}
+                      className="m-1 relative w-64 h-36 bg-gray-500"
+                    >
                       <img
                         key={index}
                         src={file.url}

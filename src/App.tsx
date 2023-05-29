@@ -1,6 +1,5 @@
-// import GetNote from "./components/GetNote";
-// import PostNote from "./components/PostNote";
-import Timeline from "./components/timeline";
+import Timeline from "./components/Timeline";
+import Menu from "./components/BottomMenu";
 
 function App() {
   // function logout() {
@@ -12,9 +11,8 @@ function App() {
   return (
     <div>
       {/* <button onClick={logout}>ログアウト</button> */}
-      {/* <GetNote /> */}
-      {/* <PostNote /> */}
       <Timeline />
+      <Menu />
     </div>
   );
 }
