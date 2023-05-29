@@ -4,7 +4,7 @@
 mod services;
 use crate::{services::DriveFile, services::Note};
 
-use chrono::{DateTime, Local, Duration, Datelike};
+use chrono::{DateTime, Datelike, Duration, Local};
 use once_cell::sync::Lazy;
 use reqwest::multipart;
 use serde_json::json;
@@ -16,15 +16,13 @@ use tauri::api::dialog::FileDialogBuilder;
 static URL: Lazy<RwLock<String>> = Lazy::new(|| RwLock::new("".to_string()));
 static TOKEN: Lazy<RwLock<String>> = Lazy::new(|| RwLock::new("".to_string()));
 
-fn extract_noteid(note_id: String) -> String {
-    let temp_id: Vec<&str> = note_id.split('/').collect();
-    temp_id[4].to_string()
-}
+// fn extract_noteid(note_id: String) -> String {
+//     let temp_id: Vec<&str> = note_id.split('/').collect();
+//     temp_id[4].to_string()
+// }
 
 fn format_datetime(datetime_str: &str) -> String {
-    let datetime = datetime_str
-        .parse::<DateTime<Local>>()
-        .unwrap();
+    let datetime = datetime_str.parse::<DateTime<Local>>().unwrap();
 
     let current_datetime = Local::now();
     let duration = current_datetime.signed_duration_since(datetime);
@@ -46,45 +44,28 @@ fn format_datetime(datetime_str: &str) -> String {
 
 #[tauri::command]
 async fn get_timeline() -> Vec<Note> {
-    let client: reqwest::Client = reqwest::Client::new();
-    let url: String = URL.read().unwrap().clone();
-    let access_token: String = TOKEN.read().unwrap().clone();
-
-    let mut res: Vec<Note> = client
-        .post(&format!("https://{}/api/notes/timeline", url))
-        .json(&json!({ "i": access_token, "limit": 20 }))
-        .send()
-        .await
-        .unwrap()
-        .json()
-        .await
-        .unwrap();
-
-    for note in &mut res {
-        note.modifiedCreatedAt = Some(format_datetime(&note.createdAt));
-        if let Some(ref mut renote) = &mut note.renote {
-            renote.modifiedCreatedAt = Some(format_datetime(&renote.createdAt));
-        }
-    }
-
-    res
+    fetch_notes(None).await
 }
 
 #[tauri::command]
 async fn pagination(id: String) -> Vec<Note> {
+    fetch_notes(Some(id)).await
+}
+
+async fn fetch_notes(id: Option<String>) -> Vec<Note> {
     let client: reqwest::Client = reqwest::Client::new();
     let url: String = URL.read().unwrap().clone();
     let access_token: String = TOKEN.read().unwrap().clone();
 
-    let mut res: Vec<Note> = client
+    let mut request = client
         .post(&format!("https://{}/api/notes/timeline", url))
-        .json(&json!({ "i": access_token, "limit": 20, "untilId": id }))
-        .send()
-        .await
-        .unwrap()
-        .json()
-        .await
-        .unwrap();
+        .json(&json!({ "i": access_token, "limit": 20 }));
+
+    if let Some(id) = id {
+        request = request.json(&json!({ "i": access_token, "limit": 20, "untilId": id }));
+    }
+
+    let mut res: Vec<Note> = request.send().await.unwrap().json().await.unwrap();
 
     for note in &mut res {
         note.modifiedCreatedAt = Some(format_datetime(&note.createdAt));
@@ -96,30 +77,30 @@ async fn pagination(id: String) -> Vec<Note> {
     res
 }
 
-#[tauri::command]
-async fn get_note(note_id: String) -> Note {
-    let extracted_note_id: String = extract_noteid(note_id);
-    let client: reqwest::Client = reqwest::Client::new();
-    let url: String = URL.read().unwrap().clone();
-    let access_token: String = TOKEN.read().unwrap().clone();
+// #[tauri::command]
+// async fn get_note(note_id: String) -> Note {
+//     let extracted_note_id: String = extract_noteid(note_id);
+//     let client: reqwest::Client = reqwest::Client::new();
+//     let url: String = URL.read().unwrap().clone();
+//     let access_token: String = TOKEN.read().unwrap().clone();
 
-    let mut res: Note = client
-        .post(&format!("https://{}/api/notes/show", url))
-        .json(&json!({ "i": access_token, "noteId": extracted_note_id }))
-        .send()
-        .await
-        .unwrap()
-        .json()
-        .await
-        .unwrap();
+//     let mut res: Note = client
+//         .post(&format!("https://{}/api/notes/show", url))
+//         .json(&json!({ "i": access_token, "noteId": extracted_note_id }))
+//         .send()
+//         .await
+//         .unwrap()
+//         .json()
+//         .await
+//         .unwrap();
 
-    res.modifiedCreatedAt = Some(format_datetime(&res.createdAt));
-    if let Some(ref mut renote) = &mut res.renote {
-        renote.modifiedCreatedAt = Some(format_datetime(&renote.createdAt));
-    }
+//     res.modifiedCreatedAt = Some(format_datetime(&res.createdAt));
+//     if let Some(ref mut renote) = &mut res.renote {
+//         renote.modifiedCreatedAt = Some(format_datetime(&renote.createdAt));
+//     }
 
-    res
-}
+//     res
+// }
 
 #[tauri::command]
 async fn post(text: String) -> bool {
@@ -218,7 +199,6 @@ async fn upload_file() -> Vec<String> {
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
-            get_note,
             set_token,
             set_instance,
             post,
