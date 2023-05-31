@@ -80,11 +80,11 @@ function RenderNote({ note }: Props): JSX.Element {
   };
 
   return (
-    <div className="min-h-[7em] border-2 p-3 m-1 rounded-3xl border-black border-dashed relative">
+    <div className="min-h-[7em] border-2 p-3 mr-1 ml-1 border-pink-100 border-dashed relative">
       <div className="w-20 float-left">
         <img
           src={note.user.avatarUrl}
-          className="rounded-full aspect-square"
+          className="rounded-full aspect-square object-cover"
         />
       </div>
       <div className="absolute right-3 top-3">
@@ -109,7 +109,7 @@ function RenderNote({ note }: Props): JSX.Element {
           )}
         </div>
         {note.files && (
-          <div className="flex">
+          <div className="flex flex-wrap">
             {note.files.map((file, index) => (
               <div
                 key={index}
@@ -117,7 +117,7 @@ function RenderNote({ note }: Props): JSX.Element {
               >
                 <img
                   key={index}
-                  src={file.url}
+                  src={file.thumbnailUrl}
                   alt={file.name}
                   className="w-full h-full object-contain absolute"
                 />
@@ -130,7 +130,7 @@ function RenderNote({ note }: Props): JSX.Element {
             <div className="w-20 float-left">
               <img
                 src={note.renote.user.avatarUrl}
-                className="rounded-full aspect-square"
+                className="rounded-full aspect-square object-cover"
               />
             </div>
             <div className="absolute right-3 top-3">
@@ -158,7 +158,7 @@ function RenderNote({ note }: Props): JSX.Element {
                 )}
               </div>
               {note.renote.files && (
-                <div className="flex">
+                <div className="flex flex-wrap">
                   {note.renote.files.map((file, index) => (
                     <div
                       key={index}
@@ -166,7 +166,7 @@ function RenderNote({ note }: Props): JSX.Element {
                     >
                       <img
                         key={index}
-                        src={file.url}
+                        src={file.thumbnailUrl}
                         alt={file.name}
                         className="w-full h-full object-contain absolute"
                       />

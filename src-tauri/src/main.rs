@@ -138,58 +138,55 @@ fn set_instance(instance: &str) {
 }
 
 fn read_file_to_bytes(file_path: std::path::PathBuf) -> Vec<u8> {
-    let mut file = BufReader::new(File::open(file_path).unwrap());
-    let mut buffer = Vec::new();
+    let mut file: BufReader<File> = BufReader::new(File::open(file_path).unwrap());
+    let mut buffer: Vec<u8> = Vec::new();
     file.read_to_end(&mut buffer).unwrap();
     buffer
 }
 
 #[tauri::command]
-async fn upload_file() -> Vec<String> {
+async fn upload_files() -> Vec<DriveFile> {
     let client: reqwest::Client = reqwest::Client::new();
     let url: String = URL.read().unwrap().clone();
-    let (file_id_tx, file_id_rx) = async_std::channel::bounded(1);
+    let (drive_file_tx, drive_file_rx) = async_std::channel::bounded(1);
 
-    let handle = async_std::task::spawn(async move {
-        let mut file_id: Vec<String> = Vec::new();
-        while let Ok(res) = file_id_rx.recv().await {
-            file_id.extend(res);
+    let handle: async_std::task::JoinHandle<Vec<DriveFile>> = async_std::task::spawn(async move {
+        let mut drive_file: Vec<DriveFile> = Vec::new();
+        while let Ok(res) = drive_file_rx.recv().await {
+            drive_file.extend(res);
         }
-        file_id
+        drive_file
     });
 
     FileDialogBuilder::new().pick_files(move |file_paths: Option<Vec<std::path::PathBuf>>| {
-        match file_paths {
-            Some(v) => {
-                async_std::task::spawn(async move {
-                    let mut file_id: Vec<String> = Vec::new();
-                    for path in v {
-                        let access_token: String = TOKEN.read().unwrap().clone();
-                        let file_bytes = read_file_to_bytes(path);
-                        let now = Local::now().format("%Y%m%d-%H:%M:%S");
+        if let Some(v) = file_paths {
+            async_std::task::spawn(async move {
+                let mut drive_file: Vec<DriveFile> = Vec::new();
+                for path in v {
+                    let access_token: String = TOKEN.read().unwrap().clone();
+                    let file_bytes = read_file_to_bytes(path);
+                    let now = Local::now().format("%Y%m%d-%H:%M:%S");
 
-                        let form: multipart::Form =
-                            multipart::Form::new().text("i", access_token).part(
-                                "file",
-                                multipart::Part::bytes(file_bytes).file_name(format!("{}", now)),
-                            );
+                    let form: multipart::Form =
+                        multipart::Form::new().text("i", access_token).part(
+                            "file",
+                            multipart::Part::bytes(file_bytes).file_name(format!("{}", now)),
+                        );
 
-                        let res: DriveFile = client
-                            .post(&format!("https://{}/api/drive/files/create", url))
-                            .multipart(form)
-                            .send()
-                            .await
-                            .unwrap()
-                            .json()
-                            .await
-                            .unwrap();
+                    let res: DriveFile = client
+                        .post(&format!("https://{}/api/drive/files/create", url))
+                        .multipart(form)
+                        .send()
+                        .await
+                        .unwrap()
+                        .json()
+                        .await
+                        .unwrap();
 
-                        file_id.push(res.id);
-                    }
-                    let _ = file_id_tx.send(file_id).await;
-                });
-            }
-            _ => {}
+                    drive_file.push(res);
+                }
+                let _ = drive_file_tx.send(drive_file).await;
+            });
         }
     });
 
@@ -202,7 +199,7 @@ fn main() {
             set_token,
             set_instance,
             post,
-            upload_file,
+            upload_files,
             get_timeline,
             pagination
         ])

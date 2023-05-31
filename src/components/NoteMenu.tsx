@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api";
 import { useState } from "react";
 import Modal from "react-modal";
+import { DriveFile } from "../interfaces/drivefile";
 
 Modal.setAppElement("#root");
 
@@ -9,19 +10,18 @@ const modalStyle = {
     background: "rgba(0, 0, 0, 0.5)",
   },
   content: {
-    overflow: "clip",
-    height: "38dvh",
-    bottom: "50dvh",
     border: "none",
     background: "white",
     borderRadius: "2em",
-    width: "47dvh",
+    width: "19em",
     margin: "auto",
+    height: "25em",
   },
 };
 
 function NoteMenu() {
   const [isOpen, setIsOpen] = useState(false);
+  const [files, uploadFiles] = useState<DriveFile[]>();
   let inputValue: string;
 
   function openModal() {
@@ -42,9 +42,8 @@ function NoteMenu() {
       : console.log("投稿失敗");
   }
 
-  function handleSubmit(e: { preventDefault: () => void }) {
-    e.preventDefault();
-    post();
+  async function upload() {
+    uploadFiles(await invoke("upload_files"));
   }
 
   return (
@@ -62,20 +61,38 @@ function NoteMenu() {
         style={modalStyle}
         contentLabel="入力メニュー"
       >
-        <form onSubmit={handleSubmit}>
-          <button type="submit" className="float-right">
+        <div className="flex">
+          <button onClick={upload} className="w-16 h-16 rounded-full">
+            <img src="/tabler-icons/photo-up.svg" />
+          </button>
+          <button onClick={post} className="w-16 h-16 rounded-full">
             <img src="/tabler-icons/send.svg" />
           </button>
+        </div>
+        <form>
           <textarea
             onChange={handleInputChange}
             autoFocus={true}
-            className="w-[40dvh] h-[20dvh] border-pink-400 solid border-2 rounded-xl box-border outline-none resize-none"
+            className="w-64 h-64 border-pink-400 solid border-2 rounded-xl box-border outline-none resize-none"
           />
-          {/* <div className="flex">
-                        <button> TODO ファイルをアップロードしてモーダルの下に表示するやつ
-                        </button>
-                    </div> */}
         </form>
+        {files && (
+          <div className="flex">
+            {files.map((file, index) => (
+              <div
+                key={index}
+                className="m-1 relative w-16 h-9 bg-gray-500"
+              >
+                <img
+                  key={index}
+                  src={file.thumbnailUrl}
+                  alt={file.name}
+                  className="w-full h-full object-contain absolute"
+                />
+              </div>
+            ))}
+          </div>
+        )}
       </Modal>
     </div>
   );
