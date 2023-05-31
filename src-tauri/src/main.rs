@@ -43,27 +43,24 @@ fn format_datetime(datetime_str: &str) -> String {
 }
 
 #[tauri::command]
-async fn get_timeline() -> Vec<Note> {
-    fetch_notes(None).await
-}
-
-#[tauri::command]
-async fn pagination(id: String) -> Vec<Note> {
-    fetch_notes(Some(id)).await
-}
-
-async fn fetch_notes(id: Option<String>) -> Vec<Note> {
+async fn fetch_notes(id: Option<String>, until_date: Option<u32>) -> Vec<Note> {
     let client: reqwest::Client = reqwest::Client::new();
     let url: String = URL.read().unwrap().clone();
     let access_token: String = TOKEN.read().unwrap().clone();
 
-    let mut request = client
-        .post(&format!("https://{}/api/notes/timeline", url))
-        .json(&json!({ "i": access_token, "limit": 20 }));
+    let mut json_body = json!({ "i": access_token, "limit": 20 });
 
     if let Some(id) = id {
-        request = request.json(&json!({ "i": access_token, "limit": 20, "untilId": id }));
+        json_body["untilId"] = json!(id);
     }
+
+    if let Some(date) = until_date {
+        json_body["untilDate"] = json!(date);
+    }
+
+    let request = client
+        .post(&format!("https://{}/api/notes/timeline", url))
+        .json(&json_body);
 
     let mut res: Vec<Note> = request.send().await.unwrap().json().await.unwrap();
 
@@ -200,8 +197,7 @@ fn main() {
             set_instance,
             post,
             upload_files,
-            get_timeline,
-            pagination
+            fetch_notes
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

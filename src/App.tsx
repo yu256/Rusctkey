@@ -1,5 +1,5 @@
 import Timeline from "./components/Timeline";
-import Menu from "./components/BottomMenu";
+import Menu from "./components/AppMenu";
 
 function App() {
   // function logout() {
