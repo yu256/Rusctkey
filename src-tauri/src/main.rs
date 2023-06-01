@@ -43,7 +43,7 @@ fn format_datetime(datetime_str: &str) -> String {
 }
 
 #[tauri::command]
-async fn fetch_notes(id: Option<String>, until_date: Option<u64>) -> Vec<Note> {
+async fn fetch_notes(id: Option<String>, until_date: Option<String>) -> Vec<Note> {
     let client: reqwest::Client = reqwest::Client::new();
     let url: String = URL.read().unwrap().clone();
     let access_token: String = TOKEN.read().unwrap().clone();
@@ -55,7 +55,8 @@ async fn fetch_notes(id: Option<String>, until_date: Option<u64>) -> Vec<Note> {
     }
 
     if let Some(until_date) = until_date {
-        json_body["untilDate"] = json!(until_date);
+        let num: u64 = until_date.parse().unwrap();
+        json_body["untilDate"] = json!(num);
     }
 
     let request = client
