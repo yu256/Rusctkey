@@ -8,7 +8,7 @@ function Timeline() {
 
   useEffect(() => {
     const fetchNotes = async () => {
-      const initialNotes = await invoke<Note[]>("get_timeline");
+      const initialNotes = await invoke<Note[]>("fetch_notes");
       setNotes(initialNotes);
     };
 
@@ -19,8 +19,8 @@ function Timeline() {
     if (notes.length === 0) return;
 
     const lastNoteId = notes[notes.length - 1].id;
-    const newNotes = await invoke<Note[]>("pagination", {
-      id: lastNoteId,
+    const newNotes = await invoke<Note[]>("fetch_notes", {
+      until_id: lastNoteId,
     });
     setNotes([...notes, ...newNotes]);
   };
