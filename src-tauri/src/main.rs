@@ -43,7 +43,7 @@ fn format_datetime(datetime_str: &str) -> String {
 }
 
 #[tauri::command]
-async fn fetch_notes(id: Option<String>, until_date: Option<u32>) -> Vec<Note> {
+async fn fetch_notes(id: Option<String>, until_date: Option<i64>) -> Vec<Note> {
     let client: reqwest::Client = reqwest::Client::new();
     let url: String = URL.read().unwrap().clone();
     let access_token: String = TOKEN.read().unwrap().clone();
@@ -54,13 +54,14 @@ async fn fetch_notes(id: Option<String>, until_date: Option<u32>) -> Vec<Note> {
         json_body["untilId"] = json!(id);
     }
 
-    if let Some(date) = until_date {
-        json_body["untilDate"] = json!(date);
+    if let Some(until_date) = until_date {
+        json_body["untilDate"] = json!(until_date);
     }
 
     let request = client
         .post(&format!("https://{}/api/notes/timeline", url))
         .json(&json_body);
+
 
     let mut res: Vec<Note> = request.send().await.unwrap().json().await.unwrap();
 

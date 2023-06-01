@@ -3,19 +3,16 @@ import { useEffect, useState } from "react";
 import { Note } from "../interfaces/note";
 import { invoke } from "@tauri-apps/api";
 
-const untilDate = Number(localStorage.getItem("untilDate"));
+const until_date = localStorage.getItem("untilDate");
 
 function Timeline() {
   const [notes, setNotes] = useState<Note[]>([]);
 
   useEffect(() => {
     const fetchNotes = async () => {
-      const initialNotes =
-        untilDate != null
-          ? await invoke<Note[]>("fetch_notes", {
-              until_date: untilDate,
-            })
-          : await invoke<Note[]>("fetch_notes");
+      const initialNotes = await invoke<Note[]>("fetch_notes", {
+        untilDate: until_date != null ? Number(until_date) : null,
+      });
       setNotes(initialNotes);
     };
 
@@ -55,9 +52,11 @@ function Timeline() {
 
   return (
     <div>
-      {untilDate && (
+      {until_date && (
         <div>
-          <button onClick={closeTimeMachine}>✖</button>
+          <button onClick={closeTimeMachine} className="fixed z-10">
+            ✖
+          </button>
         </div>
       )}
       <div className="list-none">
