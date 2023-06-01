@@ -28,9 +28,9 @@ fn format_datetime(datetime_str: &str) -> String {
     let duration = current_datetime.signed_duration_since(datetime);
 
     if datetime.year() != current_datetime.year() {
-        datetime.format("%Y/%m/%d").to_string()
+        datetime.format("%Y/%m/%d/%X").to_string()
     } else if duration >= Duration::days(4) {
-        datetime.format("%m/%d").to_string()
+        datetime.format("%m/%d|%X").to_string()
     } else if duration >= Duration::days(1) {
         format!("{}日前", duration.num_days())
     } else if duration >= Duration::hours(1) {
@@ -43,15 +43,23 @@ fn format_datetime(datetime_str: &str) -> String {
 }
 
 #[tauri::command]
-async fn fetch_notes(id: Option<String>, until_date: Option<String>) -> Vec<Note> {
+async fn fetch_notes(
+    until_id: Option<String>,
+    since_id: Option<String>,
+    until_date: Option<String>,
+) -> Vec<Note> {
     let client: reqwest::Client = reqwest::Client::new();
     let url: String = URL.read().unwrap().clone();
     let access_token: String = TOKEN.read().unwrap().clone();
 
     let mut json_body = json!({ "i": access_token, "limit": 20 });
 
-    if let Some(id) = id {
+    if let Some(id) = until_id {
         json_body["untilId"] = json!(id);
+    }
+
+    if let Some(id) = &since_id {
+        json_body["sinceId"] = json!(id);
     }
 
     if let Some(until_date) = until_date {
@@ -63,8 +71,11 @@ async fn fetch_notes(id: Option<String>, until_date: Option<String>) -> Vec<Note
         .post(&format!("https://{}/api/notes/timeline", url))
         .json(&json_body);
 
-
     let mut res: Vec<Note> = request.send().await.unwrap().json().await.unwrap();
+
+    if let Some(_) = since_id {
+        res.reverse();
+    }
 
     for note in &mut res {
         note.modifiedCreatedAt = Some(format_datetime(&note.createdAt));

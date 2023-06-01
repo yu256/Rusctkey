@@ -11,7 +11,7 @@ function Timeline() {
   useEffect(() => {
     const fetchNotes = async () => {
       const initialNotes = await invoke<Note[]>("fetch_notes", {
-        untilDate: untilDate
+        untilDate: untilDate,
       });
       setNotes(initialNotes);
     };
@@ -19,25 +19,35 @@ function Timeline() {
     fetchNotes();
   }, []);
 
-  const loadMoreNotes = async () => {
+  async function loadMoreNotesUp() {
+    if (notes.length === 0) return;
+
+    const firstNoteId = notes[0].id;
+    const newNotes = await invoke<Note[]>("fetch_notes", {
+      sinceId: firstNoteId,
+    });
+    setNotes([...newNotes, ...notes]);
+  }
+
+  async function loadMoreNotesDown() {
     if (notes.length === 0) return;
 
     const lastNoteId = notes[notes.length - 1].id;
     const newNotes = await invoke<Note[]>("fetch_notes", {
-      id: lastNoteId,
+      untilId: lastNoteId,
     });
     setNotes([...notes, ...newNotes]);
-  };
+  }
 
   useEffect(() => {
-    const handleScroll = () => {
+    function handleScroll() {
       const isAtBottom =
         window.innerHeight + window.scrollY >=
         document.body.offsetHeight;
       if (isAtBottom) {
-        loadMoreNotes();
+        loadMoreNotesDown();
       }
-    };
+    }
 
     window.addEventListener("scroll", handleScroll);
     return () => {
@@ -54,9 +64,13 @@ function Timeline() {
     <div>
       {untilDate && (
         <div>
-          <button onClick={closeTimeMachine} className="fixed z-10">
+          <button
+            onClick={closeTimeMachine}
+            className="fixed z-10 left-1 top-1"
+          >
             ✖
           </button>
+          <button onClick={loadMoreNotesUp}>もっと見る</button>
         </div>
       )}
       <div className="list-none">
@@ -65,7 +79,7 @@ function Timeline() {
             <RenderNote note={note} />
           </li>
         ))}
-        <button onClick={loadMoreNotes}>もっと見る</button>
+        <button onClick={loadMoreNotesDown}>もっと見る</button>
       </div>
     </div>
   );
