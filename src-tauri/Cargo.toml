@@ -1,8 +1,8 @@
 [package]
 name = "rusctkey"
-version = "0.0.0"
-description = "A Tauri App"
-authors = ["you"]
+version = "0.0.1"
+description = "Misskey Client"
+authors = ["yu256"]
 license = ""
 repository = ""
 edition = "2021"
