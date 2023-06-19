@@ -2,16 +2,20 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod services;
-use crate::{services::DriveFile, services::Note};
+use crate::services::DriveFile;
 
 use chrono::{DateTime, Datelike, Duration, Local};
 use once_cell::sync::Lazy;
 use reqwest::multipart;
 use serde_json::json;
+use services::modules::note::{Reaction, Reactions};
+use services::Note;
 use std::fs::File;
-use std::io::{BufReader, Read};
+use std::io::{BufReader, BufWriter, Error, Read, Write};
+use std::path::PathBuf;
 use std::sync::RwLock;
 use tauri::api::dialog::FileDialogBuilder;
+use tauri::api::path::cache_dir;
 
 static URL: Lazy<RwLock<String>> = Lazy::new(|| RwLock::new("".to_string()));
 static TOKEN: Lazy<RwLock<String>> = Lazy::new(|| RwLock::new("".to_string()));
@@ -39,6 +43,98 @@ fn format_datetime(datetime_str: &str) -> String {
         format!("{}分前", duration.num_minutes())
     } else {
         format!("{}秒前", duration.num_seconds())
+    }
+}
+
+fn open_file(path: &PathBuf) -> Result<BufReader<File>, Error> {
+    let file = File::open(path)?;
+    Ok(BufReader::new(file))
+}
+
+async fn add_emojis(name: &str) -> String {
+    let (reaction, s) = name[1..name.len() - 1].split_once("@").unwrap();
+    let server = if s == "." {
+        URL.read().unwrap().clone()
+    } else {
+        s.to_string()
+    };
+    let path = cache_dir().unwrap().join(format!("{}.json", server));
+    let mut file = match open_file(&path) {
+        Ok(file) => file,
+        Err(_) => {
+            if fetch_emojis(&server).await {
+                open_file(&path).unwrap()
+            } else {
+                todo!()
+            }
+        }
+    };
+    let mut content = String::new();
+    file.read_to_string(&mut content).unwrap();
+
+    let json: serde_json::Value = serde_json::from_str(&content).unwrap();
+    let emojis = json["emojis"].as_array().unwrap();
+
+    let url = emojis
+        .iter()
+        .find_map(|emoji| {
+            let emoji_name = emoji["name"].as_str().unwrap();
+            if emoji_name == reaction {
+                emoji["url"].as_str().map(|url| url.to_string())
+            } else {
+                None
+            }
+        })
+        .unwrap_or_else(|| panic!("Emoji not found: {}", name));
+
+    url
+}
+
+async fn fetch_emojis(server: &str) -> bool {
+    let client: reqwest::Client = reqwest::Client::new();
+
+    let res: Result<reqwest::Response, reqwest::Error> = client
+        .post(&format!("https://{}/api/emojis", server))
+        .json(&json!({}))
+        .send()
+        .await;
+
+    match res {
+        Ok(response) => {
+            if response.status().is_success() {
+                let json_body = response.text().await.unwrap();
+                let mut file = BufWriter::new(
+                    File::create(cache_dir().unwrap().join(format!("{}.json", server))).unwrap(),
+                );
+                file.write_all(json_body.as_bytes()).unwrap();
+                true
+            } else {
+                fetch_meta(server).await
+            }
+        }
+        Err(_) => false,
+    }
+}
+
+async fn fetch_meta(server: &str) -> bool {
+    let client: reqwest::Client = reqwest::Client::new();
+
+    let res: Result<reqwest::Response, reqwest::Error> = client
+        .post(&format!("https://{}/api/meta", server))
+        .json(&json!({}))
+        .send()
+        .await;
+
+    match res {
+        Ok(response) => {
+            let json_body = response.text().await.unwrap();
+            let mut file = BufWriter::new(
+                File::create(cache_dir().unwrap().join(format!("{}.json", server))).unwrap(),
+            );
+            file.write_all(json_body.as_bytes()).unwrap();
+            true
+        }
+        Err(_) => false,
     }
 }
 
@@ -78,6 +174,45 @@ async fn fetch_notes(
     }
 
     for note in &mut res {
+        note.modifiedEmojis = Some(Reactions::new());
+        if let None = note.user.host {
+            for (reaction, count) in &note.reactions {
+                let reaction = Reaction {
+                    name: reaction.to_string(),
+                    url: if reaction.starts_with(':') {
+                        add_emojis(&reaction).await
+                    } else {
+                        "".to_string()
+                    },
+                    count: *count,
+                };
+                if let Some(ref mut emojis) = note.modifiedEmojis {
+                    emojis.add_reaction(reaction);
+                }
+            }
+        } else {
+            for (reaction, count) in &note.reactions {
+                let result = if reaction.starts_with(':') {
+                    &reaction[1..reaction.len() - 1]
+                } else {
+                    reaction
+                };
+                let reaction = Reaction {
+                    name: result.to_string(),
+                    url: if let Some(url) = note.reactionEmojis.get(result) {
+                        url.to_string()
+                    } else if result.ends_with(".") {
+                        add_emojis(reaction).await
+                    } else {
+                        "".to_string()
+                    },
+                    count: *count,
+                };
+                if let Some(ref mut emojis) = note.modifiedEmojis {
+                    emojis.add_reaction(reaction);
+                }
+            }
+        }
         note.modifiedCreatedAt = Some(format_datetime(&note.createdAt));
         if let Some(ref mut renote) = &mut note.renote {
             renote.modifiedCreatedAt = Some(format_datetime(&renote.createdAt));
@@ -148,7 +283,7 @@ fn set_instance(instance: &str) {
 }
 
 fn read_file_to_bytes(file_path: std::path::PathBuf) -> Vec<u8> {
-    let mut file: BufReader<File> = BufReader::new(File::open(file_path).unwrap());
+    let mut file: BufReader<File> = open_file(&file_path).unwrap();
     let mut buffer: Vec<u8> = Vec::new();
     file.read_to_end(&mut buffer).unwrap();
     buffer

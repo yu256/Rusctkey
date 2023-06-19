@@ -5,80 +5,6 @@ interface Props {
 }
 
 function RenderNote({ note }: Props): JSX.Element {
-  function isCustomEmoji(reaction: string): boolean {
-    return reaction.startsWith(":");
-  }
-
-  function getCustomEmojiURL(reaction: string): {
-    url: string;
-    alt: string;
-  } {
-    const emoji = note.emojis.find(
-      (emoji) => emoji.name === reaction.slice(1, -1)
-    );
-    return { url: emoji!.url, alt: reaction };
-  }
-
-  function getCustomEmojiURLinText(
-    name: string,
-    isUsername: boolean
-  ): string | undefined {
-    const matchedEmoji = isUsername
-      ? note.user.emojis.find((emoji) => emoji.name === name)
-      : note.emojis.find((emoji) => emoji.name === name);
-    return matchedEmoji ? matchedEmoji.url : undefined;
-  }
-
-  function getCustomEmojiURLinRenotedText(
-    name: string,
-    isUsername: boolean
-  ): string | undefined {
-    const matchedEmoji = isUsername
-      ? note.renote!.user.emojis.find((emoji) => emoji.name === name)
-      : note.renote!.emojis.find((emoji) => emoji.name === name);
-    return matchedEmoji ? matchedEmoji.url : undefined;
-  }
-
-  const parsedText = (
-    text: string,
-    isUsername: boolean,
-    isRenoted: boolean
-  ) => {
-    const parseText = (text: string) => {
-      const regex = /:(.*?):/g;
-      const matches = text.match(regex);
-
-      if (matches) {
-        const parts = text.split(regex);
-        return parts.map((part, index) => {
-          if (matches.includes(`:${part}:`)) {
-            return !isRenoted ? (
-              <img
-                key={index}
-                src={getCustomEmojiURLinText(part, isUsername)}
-                alt={`:${part}:`}
-                className="h-4 inline"
-              />
-            ) : (
-              <img
-                key={index}
-                src={getCustomEmojiURLinRenotedText(part, isUsername)}
-                alt={`:${part}:`}
-                className="h-4 inline"
-              />
-            );
-          } else {
-            return part;
-          }
-        });
-      } else {
-        return text;
-      }
-    };
-
-    return <span>{parseText(text)}</span>;
-  };
-
   return (
     <div className="min-h-[7em] border-2 p-3 mr-1 ml-1 border-pink-100 border-dashed relative">
       <div className="w-20 float-left">
@@ -92,21 +18,13 @@ function RenderNote({ note }: Props): JSX.Element {
       </div>
       <div className="ml-24">
         <div className="text-left">
-          {parsedText(
-            note.user.name ? note.user.name : note.user.username,
-            true,
-            false
-          )}
+          {note.user.name ?? note.user.username}
           <span className="text-gray-400 ml-2">
             {note.user.username}
             {note.user.host && `@${note.user.host}`}
           </span>
           <br />
-          {note.text && (
-            <div className="mt-1">
-              {parsedText(note.text, false, false)}
-            </div>
-          )}
+          {note.text && <div className="mt-1">{note.text}</div>}
         </div>
         {note.files && (
           <div className="flex flex-wrap">
@@ -138,13 +56,7 @@ function RenderNote({ note }: Props): JSX.Element {
             </div>
             <div className="ml-24">
               <div className="text-left">
-                {parsedText(
-                  note.renote.user.name
-                    ? note.renote.user.name
-                    : note.renote.user.username,
-                  true,
-                  true
-                )}
+                {note.renote.user.name ?? note.renote.user.username}
                 <span className="text-gray-400 ml-2">
                   {note.renote.user.username}
                   {note.renote.user.host &&
@@ -152,9 +64,7 @@ function RenderNote({ note }: Props): JSX.Element {
                 </span>
                 <br />
                 {note.renote.text && (
-                  <div className="mt-1">
-                    {parsedText(note.renote.text, false, true)}
-                  </div>
+                  <div className="mt-1">{note.renote.text}</div>
                 )}
               </div>
               {note.renote.files && (
@@ -177,27 +87,25 @@ function RenderNote({ note }: Props): JSX.Element {
             </div>
           </div>
         )}
-        {note.reactions && (
+        {note.modifiedEmojis && (
           <div className="flex gap-1">
-            {Object.entries(note.reactions).map(
-              ([reaction, count]) => (
-                <div
-                  key={reaction}
-                  className="flex items-center mt-2"
-                >
-                  {isCustomEmoji(reaction) ? (
-                    <img
-                      className="w-auto h-5 max-w-full mr-1"
-                      src={getCustomEmojiURL(reaction).url}
-                      alt={getCustomEmojiURL(reaction).alt}
-                    />
-                  ) : (
-                    <span className="mr-1">{reaction}</span>
-                  )}
-                  {count}
-                </div>
-              )
-            )}
+            {note.modifiedEmojis.reactions.map((reaction) => (
+              <div
+                key={reaction.name}
+                className="flex items-center mt-2"
+              >
+                {reaction.url ? (
+                  <img
+                    className="w-auto h-5 max-w-full mr-1"
+                    src={reaction.url}
+                    alt={reaction.name}
+                  />
+                ) : (
+                  <span className="mr-1">{reaction.name}</span>
+                )}
+                {reaction.count}
+              </div>
+            ))}
           </div>
         )}
       </div>

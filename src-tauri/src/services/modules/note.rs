@@ -10,9 +10,33 @@ pub struct Note {
     pub user: User,
     pub text: Option<String>,
     pub reactions: HashMap<String, usize>,
-    pub emojis: Vec<Emojis>,
+    pub reactionEmojis: HashMap<String, String>,
+    pub modifiedEmojis: Option<Reactions>,
     pub files: Vec<Files>,
     pub renote: Option<Renote>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Reaction {
+    pub name: String,
+    pub url: String,
+    pub count: usize,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Reactions {
+    pub reactions: Vec<Reaction>,
+}
+
+impl Reactions {
+    pub fn new() -> Reactions {
+        Reactions {
+            reactions: Vec::new(),
+        }
+    }
+    pub fn add_reaction(&mut self, reaction: Reaction) {
+        self.reactions.push(reaction);
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -24,7 +48,6 @@ pub struct Renote {
     pub user: User,
     pub text: Option<String>,
     pub reactions: HashMap<String, usize>,
-    pub emojis: Vec<Emojis>,
     pub files: Vec<Files>,
 }
 
@@ -64,13 +87,7 @@ pub struct User {
     pub avatarUrl: String,
     pub instance: Option<Instance>,
     pub onlineStatus: Option<String>,
-    pub emojis: Vec<Emojis>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Emojis {
-    pub name: String,
-    pub url: String,
+    pub emojis: HashMap<String, String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
