@@ -17,8 +17,8 @@ use std::sync::RwLock;
 use tauri::api::dialog::FileDialogBuilder;
 use tauri::api::path::cache_dir;
 
-static URL: Lazy<RwLock<String>> = Lazy::new(|| RwLock::new("".to_string()));
-static TOKEN: Lazy<RwLock<String>> = Lazy::new(|| RwLock::new("".to_string()));
+static URL: Lazy<RwLock<String>> = Lazy::new(|| RwLock::new(String::from("")));
+static TOKEN: Lazy<RwLock<String>> = Lazy::new(|| RwLock::new(String::from("")));
 
 // fn extract_noteid(note_id: String) -> String {
 //     let temp_id: Vec<&str> = note_id.split('/').collect();
@@ -26,13 +26,15 @@ static TOKEN: Lazy<RwLock<String>> = Lazy::new(|| RwLock::new("".to_string()));
 // }
 
 fn format_datetime(datetime_str: &str) -> String {
-    let datetime = datetime_str.parse::<DateTime<Local>>().unwrap();
+    let datetime = datetime_str
+        .parse::<DateTime<Local>>()
+        .unwrap_or(chrono::TimeZone::with_ymd_and_hms(&Local, 2023, 1, 1, 0, 0, 0).unwrap());
 
     let current_datetime = Local::now();
     let duration = current_datetime.signed_duration_since(datetime);
 
     if datetime.year() != current_datetime.year() {
-        datetime.format("%Y/%m/%d/%X").to_string()
+        datetime.format("%Y/%m/%d|%X").to_string()
     } else if duration >= Duration::days(4) {
         datetime.format("%m/%d|%X").to_string()
     } else if duration >= Duration::days(1) {
@@ -65,7 +67,12 @@ async fn add_emojis(name: &str) -> String {
             if fetch_emojis(&server).await {
                 open_file(&path).unwrap()
             } else {
-                todo!()
+                open_file(
+                    &cache_dir()
+                        .unwrap()
+                        .join(format!("{}.json", URL.read().unwrap().clone())),
+                )
+                .unwrap() // APIからレスポンスが返ってこなかったら自鯖のemojisを参照する
             }
         }
     };
@@ -73,7 +80,9 @@ async fn add_emojis(name: &str) -> String {
     file.read_to_string(&mut content).unwrap();
 
     let json: serde_json::Value = serde_json::from_str(&content).unwrap();
-    let emojis = json["emojis"].as_array().unwrap();
+    let emojis = json["emojis"]
+        .as_array()
+        .expect("Emoji field does not exist in json.");
 
     let url = emojis
         .iter()
@@ -85,7 +94,7 @@ async fn add_emojis(name: &str) -> String {
                 None
             }
         })
-        .unwrap_or_else(|| panic!("Emoji not found: {}", name));
+        .unwrap_or(String::from(""));
 
     url
 }
@@ -138,6 +147,55 @@ async fn fetch_meta(server: &str) -> bool {
     }
 }
 
+async fn modify_notes(mut res: Vec<Note>) -> Vec<Note> {
+    for note in &mut res {
+        note.modifiedEmojis = Some(Reactions::new());
+        if let None = note.user.host {
+            for (reaction, count) in &note.reactions {
+                let reaction = Reaction {
+                    name: reaction.to_string(),
+                    url: if reaction.starts_with(':') {
+                        add_emojis(&reaction).await
+                    } else {
+                        String::from("")
+                    },
+                    count: *count,
+                };
+                if let Some(ref mut emojis) = note.modifiedEmojis {
+                    emojis.add_reaction(reaction);
+                }
+            }
+        } else {
+            for (reaction, count) in &note.reactions {
+                let result = if reaction.starts_with(':') {
+                    &reaction[1..reaction.len() - 1]
+                } else {
+                    reaction
+                };
+                let reaction = Reaction {
+                    name: result.to_string(),
+                    url: if let Some(url) = note.reactionEmojis.get(result) {
+                        url.to_string()
+                    } else if result.ends_with(".") {
+                        add_emojis(reaction).await
+                    } else {
+                        String::from("")
+                    },
+                    count: *count,
+                };
+                if let Some(ref mut emojis) = note.modifiedEmojis {
+                    emojis.add_reaction(reaction);
+                }
+            }
+        }
+        note.modifiedCreatedAt = Some(format_datetime(&note.createdAt));
+        if let Some(ref mut renote) = &mut note.renote {
+            renote.modifiedCreatedAt = Some(format_datetime(&renote.createdAt));
+        }
+    }
+    res
+}
+
 #[tauri::command]
 async fn fetch_notes(
     until_id: Option<String>,
@@ -173,53 +231,7 @@ async fn fetch_notes(
         res.reverse();
     }
 
-    for note in &mut res {
-        note.modifiedEmojis = Some(Reactions::new());
-        if let None = note.user.host {
-            for (reaction, count) in &note.reactions {
-                let reaction = Reaction {
-                    name: reaction.to_string(),
-                    url: if reaction.starts_with(':') {
-                        add_emojis(&reaction).await
-                    } else {
-                        "".to_string()
-                    },
-                    count: *count,
-                };
-                if let Some(ref mut emojis) = note.modifiedEmojis {
-                    emojis.add_reaction(reaction);
-                }
-            }
-        } else {
-            for (reaction, count) in &note.reactions {
-                let result = if reaction.starts_with(':') {
-                    &reaction[1..reaction.len() - 1]
-                } else {
-                    reaction
-                };
-                let reaction = Reaction {
-                    name: result.to_string(),
-                    url: if let Some(url) = note.reactionEmojis.get(result) {
-                        url.to_string()
-                    } else if result.ends_with(".") {
-                        add_emojis(reaction).await
-                    } else {
-                        "".to_string()
-                    },
-                    count: *count,
-                };
-                if let Some(ref mut emojis) = note.modifiedEmojis {
-                    emojis.add_reaction(reaction);
-                }
-            }
-        }
-        note.modifiedCreatedAt = Some(format_datetime(&note.createdAt));
-        if let Some(ref mut renote) = &mut note.renote {
-            renote.modifiedCreatedAt = Some(format_datetime(&renote.createdAt));
-        }
-    }
-
-    res
+    modify_notes(res).await
 }
 
 // #[tauri::command]
