@@ -4,6 +4,7 @@
 mod services;
 use crate::services::DriveFile;
 
+use async_recursion::async_recursion;
 use chrono::{DateTime, Datelike, Duration, Local};
 use once_cell::sync::Lazy;
 use reqwest::multipart;
@@ -53,6 +54,7 @@ fn open_file(path: &PathBuf) -> Result<BufReader<File>, Error> {
     Ok(BufReader::new(file))
 }
 
+#[async_recursion]
 async fn add_emojis(name: &str) -> String {
     let (reaction, _) = name[1..name.len() - 1].split_once("@").unwrap();
     let path = cache_dir().unwrap().join("emojis.json");
@@ -74,17 +76,23 @@ async fn add_emojis(name: &str) -> String {
         .as_array()
         .expect("emojis field does not exist in json.");
 
-    let url = emojis
-        .iter()
-        .find_map(|emoji| {
-            let emoji_name = emoji["name"].as_str().unwrap();
-            if emoji_name == reaction {
-                emoji["url"].as_str().map(|url| url.to_string())
+    let url = match emojis.iter().find_map(|emoji| {
+        let emoji_name = emoji["name"].as_str().unwrap();
+        if emoji_name == reaction {
+            emoji["url"].as_str().map(|url| url.to_string())
+        } else {
+            None
+        }
+    }) {
+        Some(emoji_url) => emoji_url,
+        None => {
+            if fetch_emojis().await {
+                add_emojis(name).await
             } else {
-                None
+                String::from("")
             }
-        })
-        .unwrap_or(String::from(""));
+        }
+    };
 
     url
 }
@@ -93,7 +101,10 @@ async fn fetch_emojis() -> bool {
     let client: reqwest::Client = reqwest::Client::new();
 
     let res: Result<reqwest::Response, reqwest::Error> = client
-        .post(&format!("https://{}/api/emojis", URL.read().unwrap().clone()))
+        .post(&format!(
+            "https://{}/api/emojis",
+            URL.read().unwrap().clone()
+        ))
         .json(&json!({}))
         .send()
         .await;
@@ -116,7 +127,7 @@ async fn fetch_emojis() -> bool {
 
 async fn modify_notes(mut res: Vec<Note>) -> Vec<Note> {
     for note in &mut res {
-		note.modifiedEmojis = Some(Reactions::new());
+        note.modifiedEmojis = Some(Reactions::new());
         for (reaction, count) in &note.reactions {
             let reaction = Reaction {
                 name: reaction.to_string(),
@@ -172,7 +183,13 @@ async fn fetch_notes(
         .post(&format!("https://{}/api/notes/timeline", url))
         .json(&json_body);
 
-    let mut res: Vec<Note> = request.send().await.expect("Not connected to server.").json().await.unwrap();
+    let mut res: Vec<Note> = request
+        .send()
+        .await
+        .expect("Not connected to server.")
+        .json()
+        .await
+        .unwrap();
 
     if let Some(_) = since_id {
         res.reverse();
