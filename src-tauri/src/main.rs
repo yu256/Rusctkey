@@ -177,17 +177,15 @@ async fn modify_notes(mut res: Vec<Note>) -> Vec<Note> {
             }
         } else {
             for (reaction, count) in &note.reactions {
-                let result = if reaction.starts_with(':') {
-                    &reaction[1..reaction.len() - 1]
-                } else {
-                    reaction
-                };
                 let reaction = Reaction {
-                    name: result.to_string(),
-                    url: if let Some(url) = note.reactionEmojis.get(result) {
-                        url.to_string()
-                    } else if result.ends_with(".") {
-                        add_emojis(reaction).await
+                    name: reaction.to_string(),
+                    url: if reaction.starts_with(':') {
+                        if let Some(url) = note.reactionEmojis.get(&reaction[1..reaction.len() - 1])
+                        {
+                            url.to_string()
+                        } else {
+                            add_emojis(reaction).await
+                        }
                     } else {
                         String::from("")
                     },
@@ -282,7 +280,14 @@ async fn post(text: String) -> bool {
         .await;
 
     match res {
-        Ok(_) => true,
+        Ok(response) => {
+            if response.status().is_success() {
+                true
+            } else {
+                false
+            }
+        }
+
         Err(_) => false,
     }
 }
