@@ -54,31 +54,15 @@ fn open_file(path: &PathBuf) -> Result<BufReader<File>, Error> {
 }
 
 async fn add_emojis(name: &str) -> String {
-    let (reaction, s) = name[1..name.len() - 1].split_once("@").unwrap();
-    let server = if s == "." {
-        URL.read().unwrap().clone()
-    } else {
-        s.to_string()
-    };
-    let path = cache_dir().unwrap().join(format!("{}.json", server));
+    let (reaction, _) = name[1..name.len() - 1].split_once("@").unwrap();
+    let path = cache_dir().unwrap().join("emojis.json");
     let mut file = match open_file(&path) {
         Ok(file) => file,
         Err(_) => {
-            if fetch_emojis(&server).await {
+            if fetch_emojis().await {
                 open_file(&path).unwrap()
             } else {
-                // APIからレスポンスが返ってこなかったら自鯖のemojisを参照する
-                let url = URL.read().unwrap().clone();
-                match open_file(&cache_dir().unwrap().join(format!("{}.json", url))) {
-                    Ok(file) => file,
-                    Err(_) => {
-                        if fetch_emojis(&url).await {
-                            open_file(&path).unwrap()
-                        } else {
-                            panic!("Not connected to server.")
-                        }
-                    }
-                }
+                panic!("Not connected to server.")
             }
         }
     };
@@ -88,7 +72,7 @@ async fn add_emojis(name: &str) -> String {
     let json: serde_json::Value = serde_json::from_str(&content).unwrap();
     let emojis = json["emojis"]
         .as_array()
-        .expect("Emoji field does not exist in json.");
+        .expect("emojis field does not exist in json.");
 
     let url = emojis
         .iter()
@@ -105,11 +89,11 @@ async fn add_emojis(name: &str) -> String {
     url
 }
 
-async fn fetch_emojis(server: &str) -> bool {
+async fn fetch_emojis() -> bool {
     let client: reqwest::Client = reqwest::Client::new();
 
     let res: Result<reqwest::Response, reqwest::Error> = client
-        .post(&format!("https://{}/api/emojis", server))
+        .post(&format!("https://{}/api/emojis", URL.read().unwrap().clone()))
         .json(&json!({}))
         .send()
         .await;
@@ -118,35 +102,8 @@ async fn fetch_emojis(server: &str) -> bool {
         Ok(response) => {
             if response.status().is_success() {
                 let json_body = response.text().await.unwrap();
-                let mut file = BufWriter::new(
-                    File::create(cache_dir().unwrap().join(format!("{}.json", server))).unwrap(),
-                );
-                file.write_all(json_body.as_bytes()).unwrap();
-                true
-            } else {
-                fetch_meta(server).await
-            }
-        }
-        Err(_) => false,
-    }
-}
-
-async fn fetch_meta(server: &str) -> bool {
-    let client: reqwest::Client = reqwest::Client::new();
-
-    let res: Result<reqwest::Response, reqwest::Error> = client
-        .post(&format!("https://{}/api/meta", server))
-        .json(&json!({}))
-        .send()
-        .await;
-
-    match res {
-        Ok(response) => {
-            if response.status().is_success() {
-                let json_body = response.text().await.unwrap();
-                let mut file = BufWriter::new(
-                    File::create(cache_dir().unwrap().join(format!("{}.json", server))).unwrap(),
-                );
+                let mut file =
+                    BufWriter::new(File::create(cache_dir().unwrap().join("emojis.json")).unwrap());
                 file.write_all(json_body.as_bytes()).unwrap();
                 true
             } else {
@@ -159,41 +116,23 @@ async fn fetch_meta(server: &str) -> bool {
 
 async fn modify_notes(mut res: Vec<Note>) -> Vec<Note> {
     for note in &mut res {
-        note.modifiedEmojis = Some(Reactions::new());
-        if let None = note.user.host {
-            for (reaction, count) in &note.reactions {
-                let reaction = Reaction {
-                    name: reaction.to_string(),
-                    url: if reaction.starts_with(':') {
-                        add_emojis(&reaction).await
+		note.modifiedEmojis = Some(Reactions::new());
+        for (reaction, count) in &note.reactions {
+            let reaction = Reaction {
+                name: reaction.to_string(),
+                url: if reaction.starts_with(':') {
+                    if let Some(url) = note.reactionEmojis.get(&reaction[1..reaction.len() - 1]) {
+                        url.to_string()
                     } else {
-                        String::from("")
-                    },
-                    count: *count,
-                };
-                if let Some(ref mut emojis) = note.modifiedEmojis {
-                    emojis.add_reaction(reaction);
-                }
-            }
-        } else {
-            for (reaction, count) in &note.reactions {
-                let reaction = Reaction {
-                    name: reaction.to_string(),
-                    url: if reaction.starts_with(':') {
-                        if let Some(url) = note.reactionEmojis.get(&reaction[1..reaction.len() - 1])
-                        {
-                            url.to_string()
-                        } else {
-                            add_emojis(reaction).await
-                        }
-                    } else {
-                        String::from("")
-                    },
-                    count: *count,
-                };
-                if let Some(ref mut emojis) = note.modifiedEmojis {
-                    emojis.add_reaction(reaction);
-                }
+                        add_emojis(reaction).await
+                    }
+                } else {
+                    String::from("")
+                },
+                count: *count,
+            };
+            if let Some(ref mut emojis) = note.modifiedEmojis {
+                emojis.add_reaction(reaction);
             }
         }
         note.modifiedCreatedAt = Some(format_datetime(&note.createdAt));
@@ -233,7 +172,7 @@ async fn fetch_notes(
         .post(&format!("https://{}/api/notes/timeline", url))
         .json(&json_body);
 
-    let mut res: Vec<Note> = request.send().await.unwrap().json().await.unwrap();
+    let mut res: Vec<Note> = request.send().await.expect("Not connected to server.").json().await.unwrap();
 
     if let Some(_) = since_id {
         res.reverse();
