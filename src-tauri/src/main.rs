@@ -67,12 +67,18 @@ async fn add_emojis(name: &str) -> String {
             if fetch_emojis(&server).await {
                 open_file(&path).unwrap()
             } else {
-                open_file(
-                    &cache_dir()
-                        .unwrap()
-                        .join(format!("{}.json", URL.read().unwrap().clone())),
-                )
-                .unwrap() // APIからレスポンスが返ってこなかったら自鯖のemojisを参照する
+                // APIからレスポンスが返ってこなかったら自鯖のemojisを参照する
+                let url = URL.read().unwrap().clone();
+                match open_file(&cache_dir().unwrap().join(format!("{}.json", url))) {
+                    Ok(file) => file,
+                    Err(_) => {
+                        if fetch_emojis(&url).await {
+                            open_file(&path).unwrap()
+                        } else {
+                            panic!("Not connected to server.")
+                        }
+                    }
+                }
             }
         }
     };
@@ -136,12 +142,16 @@ async fn fetch_meta(server: &str) -> bool {
 
     match res {
         Ok(response) => {
-            let json_body = response.text().await.unwrap();
-            let mut file = BufWriter::new(
-                File::create(cache_dir().unwrap().join(format!("{}.json", server))).unwrap(),
-            );
-            file.write_all(json_body.as_bytes()).unwrap();
-            true
+            if response.status().is_success() {
+                let json_body = response.text().await.unwrap();
+                let mut file = BufWriter::new(
+                    File::create(cache_dir().unwrap().join(format!("{}.json", server))).unwrap(),
+                );
+                file.write_all(json_body.as_bytes()).unwrap();
+                true
+            } else {
+                false
+            }
         }
         Err(_) => false,
     }
