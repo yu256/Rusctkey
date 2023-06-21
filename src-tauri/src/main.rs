@@ -56,7 +56,7 @@ fn open_file(path: &PathBuf) -> Result<BufReader<File>, Error> {
 
 #[async_recursion]
 async fn add_emojis(name: &str) -> String {
-    let (reaction, _) = name[1..name.len() - 1].split_once("@").unwrap();
+    let reaction = name[1..name.len() - 3];
     let path = cache_dir().unwrap().join("emojis.json");
     let mut file = match open_file(&path) {
         Ok(file) => file,
@@ -70,7 +70,7 @@ async fn add_emojis(name: &str) -> String {
     };
     let mut content = String::new();
     file.read_to_string(&mut content).unwrap();
-
+    
     let json: serde_json::Value = serde_json::from_str(&content).unwrap();
     let emojis = json["emojis"]
         .as_array()
