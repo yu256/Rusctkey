@@ -35,23 +35,23 @@ fn format_datetime(datetime_str: &str) -> String {
     let duration = current_datetime.signed_duration_since(datetime);
 
     if duration < Duration::minutes(1) {
-        format!("{}秒前", duration.num_seconds())
+        return format!("{}秒前", duration.num_seconds());
     }
 
     if duration < Duration::hours(1) {
-        format!("{}分前", duration.num_minutes())
+        return format!("{}分前", duration.num_minutes());
     }
 
     if duration < Duration::days(1) {
-        format!("{}時間前", duration.num_hours())
+        return format!("{}時間前", duration.num_hours());
     }
 
     if duration < Duration::days(4) {
-        format!("{}日前", duration.num_days())
+        return format!("{}日前", duration.num_days());
     }
 
     if datetime.year() == current_datetime.year() {
-        datetime.format("%m/%d|%x").to_string()
+        return datetime.format("%m/%d|%x").to_string();
     }
 
     datetime.format("%Y/%m/%d|%x").to_string()
