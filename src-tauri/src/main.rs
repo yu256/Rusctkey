@@ -4,7 +4,6 @@
 mod services;
 use crate::services::DriveFile;
 
-use async_recursion::async_recursion;
 use chrono::{DateTime, Datelike, Duration, Local};
 use once_cell::sync::Lazy;
 use reqwest::multipart;
@@ -62,7 +61,6 @@ fn open_file(path: &PathBuf) -> Result<BufReader<File>, Error> {
     Ok(BufReader::new(file))
 }
 
-#[async_recursion]
 async fn add_emojis(name: &str) -> String {
     let reaction = &name[1..name.len() - 3];
     let path = cache_dir().unwrap().join("emojis.json");
@@ -93,13 +91,7 @@ async fn add_emojis(name: &str) -> String {
         }
     }) {
         Some(emoji_url) => emoji_url,
-        None => {
-            if fetch_emojis().await {
-                add_emojis(name).await
-            } else {
-                String::from("")
-            }
-        }
+        None => String::from("")
     };
 
     url
@@ -154,6 +146,7 @@ async fn modify_notes(mut res: Vec<Note>) -> Vec<Note> {
                 emojis.add_reaction(reaction);
             }
         }
+		note.reactionEmojis.clear();
         note.modifiedCreatedAt = Some(format_datetime(&note.createdAt));
         if let Some(ref mut renote) = &mut note.renote {
             renote.modifiedCreatedAt = Some(format_datetime(&renote.createdAt));
