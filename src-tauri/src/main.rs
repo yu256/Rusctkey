@@ -34,19 +34,27 @@ fn format_datetime(datetime_str: &str) -> String {
     let current_datetime = Local::now();
     let duration = current_datetime.signed_duration_since(datetime);
 
-    if datetime.year() != current_datetime.year() {
-        datetime.format("%Y/%m/%d|%X").to_string()
-    } else if duration >= Duration::days(4) {
-        datetime.format("%m/%d|%X").to_string()
-    } else if duration >= Duration::days(1) {
-        format!("{}日前", duration.num_days())
-    } else if duration >= Duration::hours(1) {
-        format!("{}時間前", duration.num_hours())
-    } else if duration >= Duration::minutes(1) {
-        format!("{}分前", duration.num_minutes())
-    } else {
+    if duration < Duration::minutes(1) {
         format!("{}秒前", duration.num_seconds())
     }
+
+    if duration < Duration::hours(1) {
+        format!("{}分前", duration.num_minutes())
+    }
+
+    if duration < Duration::days(1) {
+        format!("{}時間前", duration.num_hours())
+    }
+
+    if duration < Duration::days(4) {
+        format!("{}日前", duration.num_days())
+    }
+
+    if datetime.year() == current_datetime.year() {
+        datetime.format("%m/%d|%x").to_string()
+    }
+
+    datetime.format("%Y/%m/%d|%x").to_string()
 }
 
 fn open_file(path: &PathBuf) -> Result<BufReader<File>, Error> {
@@ -56,7 +64,7 @@ fn open_file(path: &PathBuf) -> Result<BufReader<File>, Error> {
 
 #[async_recursion]
 async fn add_emojis(name: &str) -> String {
-    let reaction = name[1..name.len() - 3];
+    let reaction = &name[1..name.len() - 3];
     let path = cache_dir().unwrap().join("emojis.json");
     let mut file = match open_file(&path) {
         Ok(file) => file,
@@ -70,7 +78,7 @@ async fn add_emojis(name: &str) -> String {
     };
     let mut content = String::new();
     file.read_to_string(&mut content).unwrap();
-    
+
     let json: serde_json::Value = serde_json::from_str(&content).unwrap();
     let emojis = json["emojis"]
         .as_array()
