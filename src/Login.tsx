@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { invoke } from "@tauri-apps/api";
 
 function Login() {
-  const [token, setToken] = useState("");
-  const [instance, setInstance] = useState("");
+  let token: string;
+  let instance: string;
 
-  function set() {
-    localStorage.setItem("token", token);
-    localStorage.setItem("instance", instance);
-    location.reload();
+  async function set() {
+    (await invoke("set_credentials", { instance, token }))
+      ? location.reload()
+      : console.log("URLかトークンが正しくありません。");
   }
 
   return (
@@ -21,11 +21,11 @@ function Login() {
         }}
       >
         <input
-          onChange={(e) => setToken(e.currentTarget.value)}
+          onChange={(e) => (token = e.currentTarget.value)}
           placeholder="トークン"
         />
         <input
-          onChange={(e) => setInstance(e.currentTarget.value)}
+          onChange={(e) => (instance = e.currentTarget.value)}
           placeholder="インスタンスのURL"
         />
         <button type="submit">保存</button>

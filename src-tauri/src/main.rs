@@ -10,10 +10,9 @@ use reqwest::multipart;
 use serde_json::json;
 use services::modules::note::{Reaction, Reactions};
 use services::Note;
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::{BufReader, BufWriter, Error, Read, Write};
 use std::path::PathBuf;
-use std::sync::RwLock;
 use tauri::api::dialog::FileDialogBuilder;
 use tauri::api::path::cache_dir;
 
@@ -22,8 +21,21 @@ static DATAPATH: Lazy<PathBuf> = Lazy::new(|| {
     path.join(&path).join("com.yu256.rusctkey") // なぜか（Lazyのせい?）cache_dir().unwrap().join("com.yu256.rusctkey")とするとcache_dir().unwrap()の部分が空になる
 });
 
-static URL: Lazy<RwLock<String>> = Lazy::new(|| RwLock::new(String::from("")));
-static TOKEN: Lazy<RwLock<String>> = Lazy::new(|| RwLock::new(String::from("")));
+static URL: Lazy<String> = Lazy::new(|| {
+    let mut url = String::new();
+    let mut file = open_file(&DATAPATH.join("instance"))
+        .expect("インスタンスのURLが格納されたファイルが存在しません。");
+    file.read_to_string(&mut url).unwrap();
+    url
+});
+
+static TOKEN: Lazy<String> = Lazy::new(|| {
+    let mut url = String::new();
+    let mut file =
+        open_file(&DATAPATH.join("i")).expect("トークンが格納されたファイルが存在しません。");
+    file.read_to_string(&mut url).unwrap();
+    url
+});
 
 // fn extract_noteid(note_id: String) -> String {
 //     let temp_id: Vec<&str> = note_id.split('/').collect();
@@ -106,10 +118,7 @@ async fn fetch_emojis() -> bool {
     let client: reqwest::Client = reqwest::Client::new();
 
     let res: Result<reqwest::Response, reqwest::Error> = client
-        .post(&format!(
-            "https://{}/api/emojis",
-            URL.read().unwrap().clone()
-        ))
+        .post(&format!("https://{}/api/emojis", URL.to_string()))
         .json(&json!({}))
         .send()
         .await;
@@ -166,10 +175,10 @@ async fn fetch_notes(
     until_date: Option<String>,
 ) -> Vec<Note> {
     let client: reqwest::Client = reqwest::Client::new();
-    let url: String = URL.read().unwrap().clone();
-    let access_token: String = TOKEN.read().unwrap().clone();
+    let url: &Lazy<String> = &URL;
+    let access_token: &Lazy<String> = &TOKEN;
 
-    let mut json_body = json!({ "i": access_token, "limit": 20 });
+    let mut json_body = json!({ "i": **access_token, "limit": 20 });
 
     if let Some(id) = until_id {
         json_body["untilId"] = json!(id);
@@ -185,7 +194,7 @@ async fn fetch_notes(
     }
 
     let request = client
-        .post(&format!("https://{}/api/notes/timeline", url))
+        .post(&format!("https://{}/api/notes/timeline", url.to_string()))
         .json(&json_body);
 
     let mut res: Vec<Note> = request
@@ -231,43 +240,63 @@ async fn fetch_notes(
 #[tauri::command]
 async fn post(text: String) -> bool {
     let client: reqwest::Client = reqwest::Client::new();
-    let url: String = URL.read().unwrap().clone();
-    let access_token: String = TOKEN.read().unwrap().clone();
+    let url: &Lazy<String> = &URL;
+    let access_token: &Lazy<String> = &TOKEN;
 
     let res: Result<reqwest::Response, reqwest::Error> = client
-        .post(&format!("https://{}/api/notes/create", url))
-        .json(&json!({ "i": access_token, "text": text }))
+        .post(&format!("https://{}/api/notes/create", url.to_string()))
+        .json(&json!({ "i": **access_token, "text": text }))
         .send()
         .await;
 
     match res {
-        Ok(response) => {
-            if response.status().is_success() {
-                true
-            } else {
-                false
-            }
-        }
-
+        Ok(response) => response.status().is_success(),
         Err(_) => false,
     }
 }
 
 #[tauri::command]
-fn set_token(token: String) {
-    *TOKEN.write().unwrap() = token;
-}
-
-#[tauri::command]
-fn set_instance(instance: &str) {
-    let sliced_url = if instance.starts_with("https://") && instance.ends_with('/') {
+async fn set_credentials(instance: String, token: String) -> bool {
+    let url: &str = if instance.starts_with("https://") && instance.ends_with('/') {
         &instance[8..instance.len() - 1]
     } else if instance.starts_with("https://") {
         &instance[8..]
     } else {
-        instance
+        &instance
     };
-    *URL.write().unwrap() = sliced_url.to_string();
+
+    if ping(url, &token).await {
+        let mut instance_file = BufWriter::new(File::create(DATAPATH.join("instance")).unwrap());
+        instance_file.write_all(url.as_bytes()).unwrap();
+        let mut token_file = BufWriter::new(File::create(DATAPATH.join("i")).unwrap());
+        token_file.write_all(token.as_bytes()).unwrap();
+        true
+    } else {
+        false
+    }
+}
+
+async fn ping(url: &str, token: &str) -> bool {
+    let client: reqwest::Client = reqwest::Client::new();
+    let res: Result<reqwest::Response, reqwest::Error> = client
+        .post(&format!("https://{}/api/ping", url))
+        .json(&json!({ "i": token }))
+        .send()
+        .await;
+
+    match res {
+        Ok(response) => response.status().is_success(),
+        Err(_) => false,
+    }
+}
+
+#[tauri::command]
+fn check_is_logged_in() -> bool {
+    if let Ok(metadata) = fs::metadata(&DATAPATH.join("instance")) {
+        metadata.is_file()
+    } else {
+        false
+    }
 }
 
 fn read_file_to_bytes(file_path: std::path::PathBuf) -> Vec<u8> {
@@ -280,7 +309,7 @@ fn read_file_to_bytes(file_path: std::path::PathBuf) -> Vec<u8> {
 #[tauri::command]
 async fn upload_files() -> Vec<DriveFile> {
     let client: reqwest::Client = reqwest::Client::new();
-    let url: String = URL.read().unwrap().clone();
+    let url: &Lazy<String> = &URL;
     let (drive_file_tx, drive_file_rx) = async_std::channel::bounded(1);
 
     let handle: async_std::task::JoinHandle<Vec<DriveFile>> = async_std::task::spawn(async move {
@@ -296,7 +325,7 @@ async fn upload_files() -> Vec<DriveFile> {
             async_std::task::spawn(async move {
                 let mut drive_file: Vec<DriveFile> = Vec::new();
                 for path in v {
-                    let access_token: String = TOKEN.read().unwrap().clone();
+                    let access_token: &str = &TOKEN;
                     let file_bytes = read_file_to_bytes(path);
                     let now = Local::now().format("%Y%m%d-%H:%M:%S");
 
@@ -307,7 +336,10 @@ async fn upload_files() -> Vec<DriveFile> {
                         );
 
                     let res: DriveFile = client
-                        .post(&format!("https://{}/api/drive/files/create", url))
+                        .post(&format!(
+                            "https://{}/api/drive/files/create",
+                            url.to_string()
+                        ))
                         .multipart(form)
                         .send()
                         .await
@@ -329,8 +361,8 @@ async fn upload_files() -> Vec<DriveFile> {
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
-            set_token,
-            set_instance,
+            check_is_logged_in,
+            set_credentials,
             post,
             upload_files,
             fetch_notes
