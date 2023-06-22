@@ -17,6 +17,11 @@ use std::sync::RwLock;
 use tauri::api::dialog::FileDialogBuilder;
 use tauri::api::path::cache_dir;
 
+static DATAPATH: Lazy<PathBuf> = Lazy::new(|| {
+    let path = cache_dir().unwrap();
+    path.join(&path).join("com.yu256.rusctkey") // なぜか（Lazyのせい?）cache_dir().unwrap().join("com.yu256.rusctkey")とするとcache_dir().unwrap()の部分が空になる
+});
+
 static URL: Lazy<RwLock<String>> = Lazy::new(|| RwLock::new(String::from("")));
 static TOKEN: Lazy<RwLock<String>> = Lazy::new(|| RwLock::new(String::from("")));
 
@@ -63,7 +68,7 @@ fn open_file(path: &PathBuf) -> Result<BufReader<File>, Error> {
 
 async fn add_emojis(name: &str) -> String {
     let reaction = &name[1..name.len() - 3];
-    let path = cache_dir().unwrap().join("emojis.json");
+    let path = DATAPATH.join("emojis.json");
     let mut file = match open_file(&path) {
         Ok(file) => file,
         Err(_) => {
@@ -91,7 +96,7 @@ async fn add_emojis(name: &str) -> String {
         }
     }) {
         Some(emoji_url) => emoji_url,
-        None => String::from("")
+        None => String::from(""),
     };
 
     url
@@ -113,8 +118,7 @@ async fn fetch_emojis() -> bool {
         Ok(response) => {
             if response.status().is_success() {
                 let json_body = response.text().await.unwrap();
-                let mut file =
-                    BufWriter::new(File::create(cache_dir().unwrap().join("emojis.json")).unwrap());
+                let mut file = BufWriter::new(File::create(DATAPATH.join("emojis.json")).unwrap());
                 file.write_all(json_body.as_bytes()).unwrap();
                 true
             } else {
@@ -146,7 +150,7 @@ async fn modify_notes(mut res: Vec<Note>) -> Vec<Note> {
                 emojis.add_reaction(reaction);
             }
         }
-		note.reactionEmojis.clear();
+        note.reactionEmojis.clear();
         note.modifiedCreatedAt = Some(format_datetime(&note.createdAt));
         if let Some(ref mut renote) = &mut note.renote {
             renote.modifiedCreatedAt = Some(format_datetime(&renote.createdAt));
