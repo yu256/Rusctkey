@@ -67,10 +67,10 @@ fn format_datetime(datetime_str: &str) -> String {
     }
 
     if datetime.year() == current_datetime.year() {
-        return datetime.format("%m/%d|%x").to_string();
+        return datetime.format("%m/%d|%R").to_string();
     }
 
-    datetime.format("%Y/%m/%d|%x").to_string()
+    datetime.format("%Y/%m/%d|%R").to_string()
 }
 
 fn open_file(path: &PathBuf) -> Result<BufReader<File>, Error> {
