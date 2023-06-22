@@ -1,3 +1,4 @@
+pub mod service;
 pub mod modules;
 
 pub use self::modules::drivefile::DriveFile;
