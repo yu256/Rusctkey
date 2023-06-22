@@ -1,7 +1,7 @@
 use tauri::App;
 mod services;
 
-pub use crate::services::service::{
+pub use crate::services::commands::{
     check_is_logged_in, fetch_notes, post, set_credentials, upload_files,
 };
 
