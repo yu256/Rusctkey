@@ -20,36 +20,33 @@ const modalStyle = {
 };
 
 function NoteMenu() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [files, uploadFiles] = useState<DriveFile[]>();
-  let inputValue: string;
+  const [isOpen, toggleIsOpen] = useState(false);
+  const [files, setFiles] = useState<DriveFile[]>();
+  let text: string;
 
-  function openModal() {
-    setIsOpen(true);
+  function toggleModal() {
+    toggleIsOpen(!isOpen);
   }
 
-  function closeModal() {
-    setIsOpen(false);
-  }
-
-  function handleInputChange(e: { target: { value: string } }) {
-    inputValue = e.target.value;
+  function input(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    text = e.target.value;
   }
 
   async function post() {
-    (await invoke("post", { text: inputValue }))
-      ? closeModal()
-      : console.log("投稿失敗");
+    if (await invoke("post", { text, files })) {
+      toggleModal();
+      setFiles(undefined);
+    }
   }
 
   async function upload() {
-    uploadFiles(await invoke("upload_files"));
+    setFiles(await invoke("upload_files"));
   }
 
   return (
     <div className="block">
       <button
-        onClick={openModal}
+        onClick={toggleModal}
         className="rounded-full aspect-square fixed bottom-1 right-1"
       >
         <img src="/tabler-icons/pencil.svg" />
@@ -57,7 +54,7 @@ function NoteMenu() {
 
       <Modal
         isOpen={isOpen}
-        onRequestClose={closeModal}
+        onRequestClose={toggleModal}
         style={modalStyle}
         contentLabel="入力メニュー"
       >
@@ -71,7 +68,7 @@ function NoteMenu() {
         </div>
         <form>
           <textarea
-            onChange={handleInputChange}
+            onChange={input}
             autoFocus={true}
             className="w-64 h-64 border-pink-400 solid border-2 rounded-xl box-border outline-none resize-none"
           />

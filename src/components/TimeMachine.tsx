@@ -18,33 +18,25 @@ const modalStyle = {
 };
 
 function TimeMachine() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, toggleIsOpen] = useState(false);
   let date: string;
   let time: string;
 
-  function openModal() {
-    setIsOpen(true);
+  function toggleModal() {
+    toggleIsOpen(!isOpen);
   }
 
-  function closeModal() {
-    setIsOpen(false);
-  }
-
-  function handleDateChange(
-    event: React.ChangeEvent<HTMLInputElement>
-  ) {
+  function changeDate(event: React.ChangeEvent<HTMLInputElement>) {
     date = event.target.value;
   }
 
-  function handleTimeChange(
-    event: React.ChangeEvent<HTMLInputElement>
-  ) {
+  function changeTime(event: React.ChangeEvent<HTMLInputElement>) {
     time = event.target.value;
   }
 
   function submit() {
-    const dateTimeString = `${date}T${time}`;
-    const epochSeconds = Date.parse(dateTimeString);
+    const dateTime = `${date}T${time}`;
+    const epochSeconds = Date.parse(dateTime);
     localStorage.setItem("untilDate", epochSeconds.toString());
     location.reload();
   }
@@ -52,7 +44,7 @@ function TimeMachine() {
   return (
     <div className="block">
       <button
-        onClick={openModal}
+        onClick={toggleModal}
         className="rounded-full aspect-square fixed top-1 right-1"
       >
         <img src="/tabler-icons/calendar.svg" />
@@ -60,12 +52,12 @@ function TimeMachine() {
 
       <Modal
         isOpen={isOpen}
-        onRequestClose={closeModal}
+        onRequestClose={toggleModal}
         style={modalStyle}
         contentLabel="入力メニュー"
       >
-        <input type="date" onChange={handleDateChange} />
-        <input type="time" onChange={handleTimeChange} />
+        <input type="date" onChange={changeDate} />
+        <input type="time" onChange={changeTime} />
         <button onClick={submit}>決定</button>
       </Modal>
     </div>

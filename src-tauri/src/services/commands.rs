@@ -4,7 +4,6 @@ use std::{
 };
 
 use chrono::Local;
-use once_cell::sync::Lazy;
 use reqwest::multipart;
 use serde_json::json;
 use tauri::api::dialog::FileDialogBuilder;
@@ -22,10 +21,9 @@ pub async fn fetch_notes(
     until_date: Option<String>,
 ) -> Vec<Note> {
     let client: reqwest::Client = reqwest::Client::new();
-    let access_token: &Lazy<String> = &TOKEN;
     let url: &str = &URL;
 
-    let mut json_body = json!({ "i": **access_token, "limit": 20 });
+    let mut json_body = json!({ "i": *TOKEN, "limit": 20 });
 
     if let Some(id) = until_id {
         json_body["untilId"] = json!(id);
@@ -58,13 +56,23 @@ pub async fn fetch_notes(
 }
 
 #[tauri::command]
-pub async fn post(text: String) -> bool {
+pub async fn post(text: String, files: Option<Vec<DriveFile>>) -> bool {
     let client: reqwest::Client = reqwest::Client::new();
     let url: &str = &URL;
 
+    let mut json_body = json!({ "i": *TOKEN, "text": text });
+
+    if let Some(drive_files) = files {
+        let id: Vec<&str> = drive_files
+            .iter()
+            .map(|drive_file| drive_file.id.as_str())
+            .collect();
+        json_body["fileIds"] = json!(id);
+    }
+
     let res: Result<reqwest::Response, reqwest::Error> = client
         .post(&format!("https://{}/api/notes/create", url))
-        .json(&json!({ "i": *TOKEN, "text": text }))
+        .json(&json!(&json_body))
         .send()
         .await;
 

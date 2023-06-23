@@ -1,8 +1,3 @@
-use std::{
-    fs::File,
-    io::{BufWriter, Read, Write},
-};
-
 use super::{
     modules::note::{Reaction, Reactions},
     service::{open_file, DATAPATH, URL},
@@ -10,6 +5,10 @@ use super::{
 };
 use chrono::{DateTime, Datelike, Duration, Local};
 use serde_json::json;
+use std::{
+    fs::File,
+    io::{BufWriter, Read, Write},
+};
 
 pub(crate) async fn modify_notes(mut res: Vec<Note>) -> Vec<Note> {
     for note in &mut res {
@@ -24,7 +23,7 @@ pub(crate) async fn modify_notes(mut res: Vec<Note>) -> Vec<Note> {
                         add_emojis(reaction).await
                     }
                 } else {
-                    String::from("")
+                    String::new()
                 },
                 count: *count,
             };
@@ -71,7 +70,7 @@ async fn add_emojis(name: &str) -> String {
         }
     }) {
         Some(emoji_url) => emoji_url,
-        None => String::from(""),
+        None => String::new(),
     };
 
     url

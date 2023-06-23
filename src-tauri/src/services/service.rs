@@ -19,7 +19,7 @@ pub static URL: Lazy<String> = Lazy::new(|| {
             file.read_to_string(&mut url).unwrap();
             url
         }
-        Err(_) => String::from(""),
+        Err(_) => String::new(),
     }
 });
 
@@ -30,7 +30,7 @@ pub static TOKEN: Lazy<String> = Lazy::new(|| {
             file.read_to_string(&mut url).unwrap();
             url
         }
-        Err(_) => String::from(""),
+        Err(_) => String::new(),
     }
 });
 
