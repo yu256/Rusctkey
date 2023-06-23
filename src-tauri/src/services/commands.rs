@@ -10,6 +10,7 @@ use serde_json::json;
 use tauri::api::dialog::FileDialogBuilder;
 
 use super::{
+    defaults::err_notes,
     service::{read_file_to_bytes, DATAPATH, TOKEN, URL},
     DriveFile, Note,
 };
@@ -43,19 +44,17 @@ pub async fn fetch_notes(
         .post(&format!("https://{}/api/notes/timeline", url))
         .json(&json_body);
 
-    let mut res: Vec<Note> = request
+    let Ok(res) = request
         .send()
-        .await
-        .expect("Not connected to server.")
-        .json()
-        .await
-        .unwrap();
+        .await else { return err_notes(); };
+
+    let mut deserialized: Vec<Note> = res.json().await.unwrap();
 
     if let Some(_) = since_id {
-        res.reverse();
+        deserialized.reverse();
     }
 
-    super::note_modifier::modify_notes(res).await
+    super::note_modifier::modify_notes(deserialized).await
 }
 
 #[tauri::command]
@@ -125,7 +124,7 @@ pub async fn upload_files() -> Vec<DriveFile> {
                 for path in v {
                     let access_token: &str = &TOKEN;
                     let url: &str = &URL;
-                    let file_bytes = read_file_to_bytes(path);
+                    let file_bytes = read_file_to_bytes(path).unwrap();
                     let now = Local::now().format("%Y%m%d-%H:%M:%S");
 
                     let form: multipart::Form =

@@ -14,18 +14,24 @@ pub static DATAPATH: Lazy<PathBuf> = Lazy::new(|| {
 
 pub static URL: Lazy<String> = Lazy::new(|| {
     let mut url = String::new();
-    let mut file = open_file(&DATAPATH.join("instance"))
-        .expect("インスタンスのURLが格納されたファイルが存在しません。");
-    file.read_to_string(&mut url).unwrap();
-    url
+    match open_file(&DATAPATH.join("instance")) {
+        Ok(mut file) => {
+            file.read_to_string(&mut url).unwrap();
+            url
+        }
+        Err(_) => String::from(""),
+    }
 });
 
 pub static TOKEN: Lazy<String> = Lazy::new(|| {
     let mut url = String::new();
-    let mut file =
-        open_file(&DATAPATH.join("i")).expect("トークンが格納されたファイルが存在しません。");
-    file.read_to_string(&mut url).unwrap();
-    url
+    match open_file(&DATAPATH.join("i")) {
+        Ok(mut file) => {
+            file.read_to_string(&mut url).unwrap();
+            url
+        }
+        Err(_) => String::from(""),
+    }
 });
 
 // トークンが有効かどうかの確認に使う
@@ -43,11 +49,11 @@ pub(crate) async fn ping(url: &str, token: &str) -> bool {
     }
 }
 
-pub fn read_file_to_bytes(file_path: std::path::PathBuf) -> Vec<u8> {
-    let mut file: BufReader<File> = open_file(&file_path).unwrap();
+pub fn read_file_to_bytes(file_path: PathBuf) -> Result<Vec<u8>, Error> {
+    let mut file: BufReader<File> = open_file(&file_path)?;
     let mut buffer: Vec<u8> = Vec::new();
-    file.read_to_end(&mut buffer).unwrap();
-    buffer
+    file.read_to_end(&mut buffer)?;
+    Ok(buffer)
 }
 
 pub fn open_file(path: &PathBuf) -> Result<BufReader<File>, Error> {
