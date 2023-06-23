@@ -6,11 +6,11 @@ use std::{
 use chrono::Local;
 use reqwest::multipart;
 use serde_json::json;
-use tauri::api::dialog::FileDialogBuilder;
+use tauri::api::dialog::{FileDialogBuilder, MessageDialogBuilder};
 
 use super::{
     defaults::err_notes,
-    service::{read_file_to_bytes, DATAPATH, TOKEN, URL},
+    service::{ping, read_file_to_bytes, DATAPATH, TOKEN, URL},
     DriveFile, Note,
 };
 
@@ -56,7 +56,7 @@ pub async fn fetch_notes(
 }
 
 #[tauri::command]
-pub async fn post(text: String, files: Option<Vec<DriveFile>>) -> bool {
+pub async fn post(text: Option<String>, files: Option<Vec<DriveFile>>) -> bool {
     let client: reqwest::Client = reqwest::Client::new();
     let url: &str = &URL;
 
@@ -92,13 +92,18 @@ pub async fn set_credentials(instance: String, token: String) -> bool {
         &instance
     };
 
-    if super::service::ping(url, &token).await {
+    if ping(url, &token).await {
         let mut instance_file = BufWriter::new(File::create(DATAPATH.join("instance")).unwrap());
         instance_file.write_all(url.as_bytes()).unwrap();
         let mut token_file = BufWriter::new(File::create(DATAPATH.join("i")).unwrap());
         token_file.write_all(token.as_bytes()).unwrap();
         true
     } else {
+        MessageDialogBuilder::new(
+            "Error",
+            "Invalid credentials or Network error occurred while connecting to server.",
+        )
+        .show(|_| {});
         false
     }
 }

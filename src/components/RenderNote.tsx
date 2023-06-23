@@ -23,7 +23,6 @@ function RenderNote({ note }: Props): JSX.Element {
             {note.user.username}
             {note.user.host && `@${note.user.host}`}
           </span>
-          <br />
           {note.text && <div className="mt-1">{note.text}</div>}
         </div>
         {note.files && (
@@ -62,7 +61,6 @@ function RenderNote({ note }: Props): JSX.Element {
                   {note.renote.user.host &&
                     `@${note.renote.user.host}`}
                 </span>
-                <br />
                 {note.renote.text && (
                   <div className="mt-1">{note.renote.text}</div>
                 )}

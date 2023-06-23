@@ -26,12 +26,12 @@ function TimeMachine() {
     toggleIsOpen(!isOpen);
   }
 
-  function changeDate(event: React.ChangeEvent<HTMLInputElement>) {
-    date = event.target.value;
+  function changeDate(e: React.ChangeEvent<HTMLInputElement>) {
+    date = e.target.value;
   }
 
-  function changeTime(event: React.ChangeEvent<HTMLInputElement>) {
-    time = event.target.value;
+  function changeTime(e: React.ChangeEvent<HTMLInputElement>) {
+    time = e.target.value;
   }
 
   function submit() {

@@ -11,7 +11,7 @@ function Timeline() {
   useEffect(() => {
     const fetchNotes = async () => {
       const initialNotes = await invoke<Note[]>("fetch_notes", {
-        untilDate: untilDate,
+        untilDate,
       });
       setNotes(initialNotes);
     };
@@ -20,21 +20,19 @@ function Timeline() {
   }, []);
 
   async function loadMoreNotesUp() {
-    if (notes.length === 0) return;
+    if (!notes.length) return;
 
-    const firstNoteId = notes[0].id;
     const newNotes = await invoke<Note[]>("fetch_notes", {
-      sinceId: firstNoteId,
+      sinceId: notes[0].id,
     });
     setNotes([...newNotes, ...notes]);
   }
 
   async function loadMoreNotesDown() {
-    if (notes.length === 0) return;
+    if (!notes.length) return;
 
-    const lastNoteId = notes[notes.length - 1].id;
     const newNotes = await invoke<Note[]>("fetch_notes", {
-      untilId: lastNoteId,
+      untilId: notes[notes.length - 1].id,
     });
     setNotes([...notes, ...newNotes]);
   }

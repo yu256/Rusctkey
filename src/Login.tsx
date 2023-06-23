@@ -5,9 +5,8 @@ function Login() {
   let instance: string;
 
   async function set() {
-    (await invoke("set_credentials", { instance, token }))
-      ? location.reload()
-      : console.log("URLかトークンが正しくありません。");
+    if (await invoke("set_credentials", { instance, token }))
+      location.reload();
   }
 
   return (
@@ -15,9 +14,7 @@ function Login() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          instance && token
-            ? set()
-            : console.log("値がセットされていません。"); // TODO ポップアップさせる
+          if (instance && token) set();
         }}
       >
         <input
