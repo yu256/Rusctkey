@@ -55,7 +55,7 @@ pub async fn fetch_notes(
         res.reverse();
     }
 
-    super::service::modify_notes(res).await
+    super::note_modifier::modify_notes(res).await
 }
 
 #[tauri::command]
