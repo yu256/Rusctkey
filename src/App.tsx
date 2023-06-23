@@ -3,10 +3,10 @@ import Menu from "./components/AppMenu";
 
 function App() {
   return (
-    <div>
+    <>
       <Timeline />
       <Menu />
-    </div>
+    </>
   );
 }
 

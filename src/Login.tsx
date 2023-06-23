@@ -4,17 +4,12 @@ function Login() {
   let token: string;
   let instance: string;
 
-  async function set() {
-    if (await invoke("set_credentials", { instance, token }))
-      location.reload();
-  }
-
   return (
-    <div>
+    <>
       <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (instance && token) set();
+        onSubmit={async () => {
+          if (await invoke("set_credentials", { instance, token }))
+            location.reload();
         }}
       >
         <input
@@ -27,7 +22,7 @@ function Login() {
         />
         <button type="submit">保存</button>
       </form>
-    </div>
+    </>
   );
 }
 

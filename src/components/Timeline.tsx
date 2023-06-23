@@ -59,9 +59,9 @@ function Timeline() {
   }
 
   return (
-    <div>
+    <>
       {untilDate && (
-        <div>
+        <>
           <button
             onClick={closeTimeMachine}
             className="fixed z-10 left-1 top-1"
@@ -69,17 +69,13 @@ function Timeline() {
             ✖
           </button>
           <button onClick={loadMoreNotesUp}>もっと見る</button>
-        </div>
+        </>
       )}
-      <div className="list-none">
-        {notes.map((note) => (
-          <li key={note.id}>
-            <RenderNote note={note} />
-          </li>
-        ))}
-        <button onClick={loadMoreNotesDown}>もっと見る</button>
-      </div>
-    </div>
+      {notes.map((note) => (
+        <RenderNote note={note} key={note.id} />
+      ))}
+      <button onClick={loadMoreNotesDown}>もっと見る</button>
+    </>
   );
 }
 

@@ -6,7 +6,7 @@ interface Props {
 
 function RenderNote({ note }: Props): JSX.Element {
   return (
-    <div className="min-h-[7em] border-2 p-3 mr-1 ml-1 border-pink-100 border-dashed relative">
+    <li className="min-h-[7em] border-2 p-3 mr-1 ml-1 border-pink-100 border-dashed relative">
       <div className="w-20 float-left">
         <img
           src={note.user.avatarUrl}
@@ -27,13 +27,13 @@ function RenderNote({ note }: Props): JSX.Element {
         </div>
         {note.files && (
           <div className="flex flex-wrap">
-            {note.files.map((file, index) => (
+            {note.files.map((file) => (
               <div
-                key={index}
+                key={file.id}
                 className="m-1 relative w-64 h-36 bg-gray-500"
               >
                 <img
-                  key={index}
+                  key={file.id}
                   src={file.thumbnailUrl}
                   alt={file.name}
                   className="w-full h-full object-contain absolute"
@@ -67,13 +67,13 @@ function RenderNote({ note }: Props): JSX.Element {
               </div>
               {note.renote.files && (
                 <div className="flex flex-wrap">
-                  {note.renote.files.map((file, index) => (
+                  {note.renote.files.map((file) => (
                     <div
-                      key={index}
+                      key={file.id}
                       className="m-1 relative w-64 h-36 bg-gray-500"
                     >
                       <img
-                        key={index}
+                        key={file.id}
                         src={file.thumbnailUrl}
                         alt={file.name}
                         className="w-full h-full object-contain absolute"
@@ -107,7 +107,7 @@ function RenderNote({ note }: Props): JSX.Element {
           </div>
         )}
       </div>
-    </div>
+    </li>
   );
 }
 

@@ -28,10 +28,6 @@ function NoteMenu() {
     toggleIsOpen(!isOpen);
   }
 
-  function input(e: React.ChangeEvent<HTMLTextAreaElement>) {
-    text = e.target.value;
-  }
-
   async function post() {
     if (await invoke("post", { text, files })) {
       toggleModal();
@@ -39,15 +35,11 @@ function NoteMenu() {
     }
   }
 
-  async function upload() {
-    setFiles(await invoke("upload_files"));
-  }
-
   return (
-    <div className="block">
+    <>
       <button
         onClick={toggleModal}
-        className="rounded-full aspect-square fixed bottom-1 right-1"
+        className="aspect-square fixed bottom-1 right-1"
       >
         <img src="/tabler-icons/pencil.svg" />
       </button>
@@ -59,29 +51,34 @@ function NoteMenu() {
         contentLabel="入力メニュー"
       >
         <div className="flex">
-          <button onClick={upload} className="w-16 h-16 rounded-full">
+          <button
+            onClick={async () =>
+              setFiles(await invoke("upload_files"))
+            }
+            className="w-16 h-16"
+          >
             <img src="/tabler-icons/photo-up.svg" />
           </button>
-          <button onClick={post} className="w-16 h-16 rounded-full">
+          <button onClick={post} className="w-16 h-16">
             <img src="/tabler-icons/send.svg" />
           </button>
         </div>
         <form>
           <textarea
-            onChange={input}
+            onChange={(e) => (text = e.target.value)}
             autoFocus={true}
-            className="w-64 h-64 border-pink-400 solid border-2 rounded-xl box-border outline-none resize-none"
+            className="w-64 h-64 border-pink-400 solid border-2 box-border outline-none resize-none"
           />
         </form>
         {files && (
           <div className="flex">
-            {files.map((file, index) => (
+            {files.map((file) => (
               <div
-                key={index}
+                key={file.id}
                 className="m-1 relative w-16 h-9 bg-gray-500"
               >
                 <img
-                  key={index}
+                  key={file.id}
                   src={file.thumbnailUrl}
                   alt={file.name}
                   className="w-full h-full object-contain absolute"
@@ -91,7 +88,7 @@ function NoteMenu() {
           </div>
         )}
       </Modal>
-    </div>
+    </>
   );
 }
 
