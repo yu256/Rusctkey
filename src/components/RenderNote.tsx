@@ -18,7 +18,9 @@ function RenderNote({ note }: Props): JSX.Element {
       </div>
       <div className="ml-24">
         <div className="text-left">
-          {note.user.name ?? note.user.username}
+          <span
+            dangerouslySetInnerHTML={{ __html: note.user.name }}
+          />
           <span className="text-gray-400 ml-2">
             {note.user.username}
             {note.user.host && `@${note.user.host}`}
@@ -60,7 +62,11 @@ function RenderNote({ note }: Props): JSX.Element {
             </div>
             <div className="ml-24">
               <div className="text-left">
-                {note.renote.user.name ?? note.renote.user.username}
+                <span
+                  dangerouslySetInnerHTML={{
+                    __html: note.renote.user.name,
+                  }}
+                />
                 <span className="text-gray-400 ml-2">
                   {note.renote.user.username}
                   {note.renote.user.host &&

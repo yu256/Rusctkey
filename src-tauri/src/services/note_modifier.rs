@@ -1,12 +1,13 @@
 use super::{
     modules::note::{Reaction, Reactions},
-    parser::parse_text,
+    parser::{parse_text, parse_username},
     service::{open_file, DATAPATH, URL},
     Note,
 };
 use chrono::{DateTime, Datelike, Duration, Local};
 use serde_json::json;
 use std::{
+    collections::HashMap,
     fs::File,
     io::{BufWriter, Read, Write},
 };
@@ -34,17 +35,28 @@ pub(crate) async fn modify_notes(mut res: Vec<Note>) -> Vec<Note> {
         }
         note.reactionEmojis.clear();
         note.modifiedCreatedAt = Some(format_datetime(&note.createdAt));
+        note.user.name = Some(parse_username(
+            note.user.name.as_ref().unwrap_or(&note.user.username),
+            &note.user.emojis,
+        ));
         if let Some(ref mut renote) = &mut note.renote {
+            if let Some(text) = &renote.text {
+                renote.text = Some(parse_text(
+                    &text,
+                    &renote.emojis.as_ref().unwrap_or(&HashMap::new()),
+                ));
+            }
             renote.modifiedCreatedAt = Some(format_datetime(&renote.createdAt));
+            renote.user.name = Some(parse_username(
+                renote.user.name.as_ref().unwrap_or(&renote.user.username),
+                &renote.user.emojis,
+            ));
         }
         if let Some(text) = note.text.take() {
-            note.text = Some(parse_text(&text));
-        }
-        if let Some(mut renote) = note.renote.take() {
-            if let Some(text) = renote.text {
-                renote.text = Some(parse_text(&text));
-            }
-            note.renote = Some(renote);
+            note.text = Some(parse_text(
+                &text,
+                &note.emojis.as_ref().unwrap_or(&HashMap::new()),
+            ));
         }
     }
     res

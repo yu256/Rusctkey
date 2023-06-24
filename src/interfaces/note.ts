@@ -56,7 +56,7 @@ interface Properties {
 interface User {
   username: string;
   host?: string;
-  name?: string;
+  name: string;
   avatarUrl: string;
   instance: Instance;
   onlineStatus: string;

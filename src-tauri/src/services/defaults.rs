@@ -23,5 +23,6 @@ pub(crate) fn err_notes() -> Vec<Note> {
         modifiedEmojis: None,
         files: Vec::new(),
         renote: None,
+        emojis: Some(HashMap::new()),
     }]
 }

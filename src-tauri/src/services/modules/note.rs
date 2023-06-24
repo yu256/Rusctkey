@@ -14,6 +14,7 @@ pub struct Note {
     pub modifiedEmojis: Option<Reactions>,
     pub files: Vec<Files>,
     pub renote: Option<Renote>,
+	pub emojis: Option<HashMap<String, String>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -49,6 +50,7 @@ pub struct Renote {
     pub text: Option<String>,
     pub reactions: HashMap<String, usize>,
     pub files: Vec<Files>,
+	pub emojis: Option<HashMap<String, String>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
