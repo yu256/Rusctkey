@@ -1,5 +1,6 @@
 use super::{
     modules::note::{Reaction, Reactions},
+    parser::parse_text,
     service::{open_file, DATAPATH, URL},
     Note,
 };
@@ -35,6 +36,15 @@ pub(crate) async fn modify_notes(mut res: Vec<Note>) -> Vec<Note> {
         note.modifiedCreatedAt = Some(format_datetime(&note.createdAt));
         if let Some(ref mut renote) = &mut note.renote {
             renote.modifiedCreatedAt = Some(format_datetime(&renote.createdAt));
+        }
+        if let Some(text) = note.text.take() {
+            note.text = Some(parse_text(&text));
+        }
+        if let Some(mut renote) = note.renote.take() {
+            if let Some(text) = renote.text {
+                renote.text = Some(parse_text(&text));
+            }
+            note.renote = Some(renote);
         }
     }
     res

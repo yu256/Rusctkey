@@ -23,7 +23,12 @@ function RenderNote({ note }: Props): JSX.Element {
             {note.user.username}
             {note.user.host && `@${note.user.host}`}
           </span>
-          {note.text && <div className="mt-1">{note.text}</div>}
+          {note.text && (
+            <div
+              className="mt-1"
+              dangerouslySetInnerHTML={{ __html: note.text }}
+            ></div>
+          )}
         </div>
         {note.files && (
           <div className="flex flex-wrap">
@@ -62,7 +67,12 @@ function RenderNote({ note }: Props): JSX.Element {
                     `@${note.renote.user.host}`}
                 </span>
                 {note.renote.text && (
-                  <div className="mt-1">{note.renote.text}</div>
+                  <div
+                    className="mt-1"
+                    dangerouslySetInnerHTML={{
+                      __html: note.renote.text,
+                    }}
+                  ></div>
                 )}
               </div>
               {note.renote.files && (
