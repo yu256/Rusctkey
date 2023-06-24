@@ -83,27 +83,38 @@ pub async fn post(text: Option<String>, files: Option<Vec<DriveFile>>) -> bool {
 }
 
 #[tauri::command]
-pub async fn set_credentials(instance: String, token: String) -> bool {
-    let url: &str = if instance.starts_with("https://") && instance.ends_with('/') {
-        &instance[8..instance.len() - 1]
-    } else if instance.starts_with("https://") {
-        &instance[8..]
-    } else {
-        &instance
-    };
+pub async fn set_credentials(instance: Option<String>, token: Option<String>) -> bool {
+    if let Some(instance) = instance {
+        if let Some(i) = token {
+            let url: &str = if instance.starts_with("https://") && instance.ends_with('/') {
+                &instance[8..instance.len() - 1]
+            } else if instance.starts_with("https://") {
+                &instance[8..]
+            } else {
+                &instance
+            };
 
-    if ping(url, &token).await {
-        let mut instance_file = BufWriter::new(File::create(DATAPATH.join("instance")).unwrap());
-        instance_file.write_all(url.as_bytes()).unwrap();
-        let mut token_file = BufWriter::new(File::create(DATAPATH.join("i")).unwrap());
-        token_file.write_all(token.as_bytes()).unwrap();
-        true
+            if ping(url, &i).await {
+                let mut instance_file =
+                    BufWriter::new(File::create(DATAPATH.join("instance")).unwrap());
+                instance_file.write_all(url.as_bytes()).unwrap();
+                let mut token_file = BufWriter::new(File::create(DATAPATH.join("i")).unwrap());
+                token_file.write_all(i.as_bytes()).unwrap();
+                true
+            } else {
+                MessageDialogBuilder::new(
+                    "Error",
+                    "Invalid credentials or Network error occurred while connecting to server.",
+                )
+                .show(|_| {});
+                false
+            }
+        } else {
+            MessageDialogBuilder::new("Error", "The token field is empty.").show(|_| {});
+            false
+        }
     } else {
-        MessageDialogBuilder::new(
-            "Error",
-            "Invalid credentials or Network error occurred while connecting to server.",
-        )
-        .show(|_| {});
+        MessageDialogBuilder::new("Error", "The instance URL field is empty.").show(|_| {});
         false
     }
 }

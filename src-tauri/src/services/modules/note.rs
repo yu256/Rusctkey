@@ -93,10 +93,10 @@ pub struct User {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Instance {
-    pub name: String,
+    pub name: Option<String>,
     pub softwareName: Option<String>,
     pub softwareVersion: Option<String>,
-    pub iconUrl: String,
-    pub faviconUrl: String,
-    pub themeColor: String,
+    pub iconUrl: Option<String>,
+    pub faviconUrl: Option<String>,
+    pub themeColor: Option<String>,
 }

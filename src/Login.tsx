@@ -7,7 +7,8 @@ function Login() {
   return (
     <>
       <form
-        onSubmit={async () => {
+        onSubmit={async (e) => {
+          e.preventDefault();
           if (await invoke("set_credentials", { instance, token }))
             location.reload();
         }}

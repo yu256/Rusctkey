@@ -64,10 +64,10 @@ interface User {
 }
 
 interface Instance {
-  name: string;
+  name?: string;
   softwareName?: string;
   softwareVersion?: string;
-  iconUrl: string;
-  faviconUrl: string;
-  themeColor: string;
+  iconUrl?: string;
+  faviconUrl?: string;
+  themeColor?: string;
 }
