@@ -19,7 +19,7 @@ interface Reaction {
   count: number;
 }
 
-interface Renote {
+export interface Renote {
   id: string;
   createdAt: string;
   modifiedCreatedAt: string;
