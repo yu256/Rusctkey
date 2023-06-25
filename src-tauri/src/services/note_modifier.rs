@@ -1,16 +1,11 @@
 use super::{
     modules::note::{Reaction, Reactions},
     parser::{parse_text, parse_username},
-    service::{open_file, DATAPATH, URL},
+    service::{open_file, DATAPATH},
     Note,
 };
 use chrono::{DateTime, Datelike, Duration, Local};
-use serde_json::json;
-use std::{
-    collections::HashMap,
-    fs::File,
-    io::{BufWriter, Read, Write},
-};
+use std::{collections::HashMap, io::Read};
 
 pub(crate) async fn modify_notes(mut res: Vec<Note>) -> Vec<Note> {
     for note in &mut res {
@@ -65,16 +60,12 @@ pub(crate) async fn modify_notes(mut res: Vec<Note>) -> Vec<Note> {
 async fn add_emojis(name: &str) -> String {
     let reaction = &name[1..name.len() - 3];
     let path = DATAPATH.join("emojis.json");
+
     let mut file = match open_file(&path) {
         Ok(file) => file,
-        Err(_) => {
-            if fetch_emojis().await {
-                open_file(&path).unwrap()
-            } else {
-                panic!("Not connected to server.")
-            }
-        }
+        Err(_) => unreachable!(),
     };
+
     let mut content = String::new();
     file.read_to_string(&mut content).unwrap();
 
@@ -127,29 +118,4 @@ fn format_datetime(datetime_str: &str) -> String {
     }
 
     datetime.format("%Y/%m/%d|%R").to_string()
-}
-
-async fn fetch_emojis() -> bool {
-    let client: reqwest::Client = reqwest::Client::new();
-    let url: &str = &URL;
-
-    let res: Result<reqwest::Response, reqwest::Error> = client
-        .post(&format!("https://{}/api/emojis", url))
-        .json(&json!({}))
-        .send()
-        .await;
-
-    match res {
-        Ok(response) => {
-            if response.status().is_success() {
-                let json_body = response.text().await.unwrap();
-                let mut file = BufWriter::new(File::create(DATAPATH.join("emojis.json")).unwrap());
-                file.write_all(json_body.as_bytes()).unwrap();
-                true
-            } else {
-                false
-            }
-        }
-        Err(_) => false,
-    }
 }

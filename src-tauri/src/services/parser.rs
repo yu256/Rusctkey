@@ -90,7 +90,11 @@ fn customemojis_to_html(name: &str, emojis: &HashMap<String, String>) -> String 
 
 fn add_emojis(name: &str) -> String {
     let path = DATAPATH.join("emojis.json");
-    let mut file = open_file(&path).unwrap();
+
+    let mut file = match open_file(&path) {
+        Ok(file) => file,
+        Err(_) => unreachable!(),
+    };
 
     let mut content = String::new();
     file.read_to_string(&mut content).unwrap();
@@ -114,4 +118,3 @@ fn add_emojis(name: &str) -> String {
 
     url
 }
-

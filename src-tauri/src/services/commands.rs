@@ -10,7 +10,7 @@ use tauri::api::dialog::{FileDialogBuilder, MessageDialogBuilder};
 
 use super::{
     defaults::err_notes,
-    service::{ping, read_file_to_bytes, DATAPATH, TOKEN, URL},
+    service::{fetch_emojis, read_file_to_bytes, DATAPATH, TOKEN, URL},
     DriveFile, Note,
 };
 
@@ -94,7 +94,7 @@ pub async fn set_credentials(instance: Option<String>, token: Option<String>) ->
                 &instance
             };
 
-            if ping(url, &token).await {
+            if fetch_emojis(url, &token).await {
                 let mut instance_file =
                     BufWriter::new(File::create(DATAPATH.join("instance")).unwrap());
                 instance_file.write_all(url.as_bytes()).unwrap();
