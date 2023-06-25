@@ -58,6 +58,37 @@ pub(crate) async fn fetch_emojis(url: &str, token: &str) -> bool {
     }
 }
 
+pub(crate) fn add_emojis(name: &str) -> String {
+    let path = DATAPATH.join("emojis.json");
+
+    let mut file = match open_file(&path) {
+        Ok(file) => file,
+        Err(_) => unreachable!(),
+    };
+
+    let mut content = String::new();
+    file.read_to_string(&mut content).unwrap();
+
+    let json: serde_json::Value = serde_json::from_str(&content).unwrap();
+    let emojis = json["emojis"]
+        .as_array()
+        .expect("emojis field does not exist in json.");
+
+    let url = match emojis.iter().find_map(|emoji| {
+        let emoji_name = emoji["name"].as_str().unwrap();
+        if emoji_name == name {
+            emoji["url"].as_str().map(|url| url.to_string())
+        } else {
+            None
+        }
+    }) {
+        Some(emoji_url) => emoji_url,
+        None => String::new(),
+    };
+
+    url
+}
+
 pub fn read_file_to_bytes(file_path: PathBuf) -> Result<Vec<u8>, Error> {
     let mut file: BufReader<File> = open_file(&file_path)?;
     let mut buffer: Vec<u8> = Vec::new();
