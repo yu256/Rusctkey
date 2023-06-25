@@ -52,7 +52,7 @@ fn parse_url(line: &str) -> String {
 }
 
 fn parse_search_links(line: &str) -> String {
-    let regex = Regex::new(r"(?i)(.*)\s+(?:search|検索|\[search\]|\[検索\])").unwrap();
+    let regex = Regex::new(r"(.*)\s+(?:search|検索|\[search\]|\[検索\])").unwrap();
     let replaced_line = regex.replace_all(line, |caps: &Captures| {
         let search_query = caps.get(1).unwrap().as_str();
         format!(
