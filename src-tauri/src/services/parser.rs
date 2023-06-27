@@ -18,10 +18,7 @@ pub(crate) fn parse_text(text: &str, emojis: &HashMap<String, String>) -> String
 
     for line in lines {
 		if line.starts_with("```") {
-			if is_in_code {
-				parse_code(&line);
-				continue;
-			} else if code_count % 2 != 0 {
+			} if code_count % 2 != 0 {
 				is_in_code = false;
 				continue;
 			} else if code_count <= count {
@@ -30,7 +27,12 @@ pub(crate) fn parse_text(text: &str, emojis: &HashMap<String, String>) -> String
 			}
 			code_count += 1;
 		}
-		let line = parse_code(&line);
+
+	if is_in_code {
+            parsed_text.push_str(parse_code(&line));
+            parsed_text.push_str("<br>");
+            continue;
+        }
 
         let line = parse_url(&line);
 
