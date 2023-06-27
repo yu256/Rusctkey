@@ -33,24 +33,28 @@ pub(crate) async fn modify_notes(mut res: Vec<Note>) -> Vec<Note> {
         note.user.name = Some(parse_username(
             note.user.name.as_ref().unwrap_or(&note.user.username),
             &note.user.emojis,
+            note.user.host.is_none(),
         ));
         if let Some(ref mut renote) = &mut note.renote {
             if let Some(text) = &renote.text {
                 renote.text = Some(parse_text(
                     &text,
                     &renote.emojis.as_ref().unwrap_or(&HashMap::new()),
+                    renote.user.host.is_none(),
                 ));
             }
             renote.modifiedCreatedAt = Some(format_datetime(&renote.createdAt));
             renote.user.name = Some(parse_username(
                 renote.user.name.as_ref().unwrap_or(&renote.user.username),
                 &renote.user.emojis,
+                renote.user.host.is_none(),
             ));
         }
         if let Some(text) = note.text.take() {
             note.text = Some(parse_text(
                 &text,
                 &note.emojis.as_ref().unwrap_or(&HashMap::new()),
+                note.user.host.is_none(),
             ));
         }
     }

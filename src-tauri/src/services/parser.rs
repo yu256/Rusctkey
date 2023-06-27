@@ -5,7 +5,7 @@ use regex::{Captures, Regex};
 
 use super::service::add_emojis;
 
-pub(crate) fn parse_text(text: &str, emojis: &HashMap<String, String>) -> String {
+pub(crate) fn parse_text(text: &str, emojis: &HashMap<String, String>, is_local: bool) -> String {
     let html = sanitize_html(text);
     let mut parsed_text = String::new();
 
@@ -18,7 +18,7 @@ pub(crate) fn parse_text(text: &str, emojis: &HashMap<String, String>) -> String
 
         // let line = parse_twemoji(&line);
 
-        let line = parse_customemojis(&line, &emojis);
+        let line = parse_customemojis(&line, &emojis, is_local);
 
         // let line = parse_mfm(&line);
 
@@ -31,9 +31,13 @@ pub(crate) fn parse_text(text: &str, emojis: &HashMap<String, String>) -> String
     parsed_text
 }
 
-pub(crate) fn parse_username(text: &str, emojis: &HashMap<String, String>) -> String {
+pub(crate) fn parse_username(
+    text: &str,
+    emojis: &HashMap<String, String>,
+    is_local: bool,
+) -> String {
     let html = sanitize_html(text);
-    parse_customemojis(&html, &emojis)
+    parse_customemojis(&html, &emojis, is_local)
 }
 
 fn sanitize_html(text: &str) -> String {
@@ -64,20 +68,24 @@ fn parse_search_links(line: &str) -> String {
     replaced_line.to_string()
 }
 
-fn parse_customemojis(line: &str, emojis: &HashMap<String, String>) -> String {
+fn parse_customemojis(line: &str, emojis: &HashMap<String, String>, is_local: bool) -> String {
     let regex = Regex::new(r":(\w+):").unwrap();
     let replaced_line = regex.replace_all(line, |caps: &Captures| {
         let emoji_code = caps.get(1).unwrap().as_str();
-        customemojis_to_html(emoji_code, emojis)
+        customemojis_to_html(emoji_code, emojis, is_local)
     });
     replaced_line.to_string()
 }
 
-fn customemojis_to_html(name: &str, emojis: &HashMap<String, String>) -> String {
-    let url = if let Some(url) = emojis.get(name) {
-        url.to_string()
-    } else {
+fn customemojis_to_html(name: &str, emojis: &HashMap<String, String>, is_local: bool) -> String {
+    let url = if is_local {
         add_emojis(name)
+    } else {
+        if let Some(url) = emojis.get(name) {
+            url.to_string()
+        } else {
+            String::new()
+        }
     };
 
     let style = "display: inline; width: auto; height: 2em; max-width: 100%;";
