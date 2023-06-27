@@ -10,8 +10,28 @@ pub(crate) fn parse_text(text: &str, emojis: &HashMap<String, String>) -> String
     let mut parsed_text = String::new();
 
     let lines: Vec<&str> = html.lines().collect();
+	// シンタックスハイライト用
+	let count: usize = lines.iter().filter(|&line| line.starts_with("```")).count() & !1;
+	let mut code_count: usize = 0;
+	let mut is_in_code = false;
+	let mut code_lang = String::new();
 
     for line in lines {
+		if line.starts_with("```") {
+			if is_in_code {
+				parse_code(&line);
+				continue;
+			} else if code_count % 2 != 0 {
+				is_in_code = false;
+				continue;
+			} else if code_count <= count {
+				is_in_code = true;
+				continue;
+			}
+			code_count += 1;
+		}
+		let line = parse_code(&line);
+
         let line = parse_url(&line);
 
         let line = parse_search_links(&line);
@@ -31,20 +51,24 @@ pub(crate) fn parse_text(text: &str, emojis: &HashMap<String, String>) -> String
     parsed_text
 }
 
-pub(crate) fn parse_username(text: &str, emojis: &HashMap<String, String>) -> String {
-    let html = sanitize_html(text);
-    parse_customemojis(&html, &emojis)
-}
-
 fn sanitize_html(text: &str) -> String {
     let builder = Builder::default();
 
     builder.clean(text).to_string()
 }
 
+pub(crate) fn parse_username(text: &str, emojis: &HashMap<String, String>) -> String {
+    let html = sanitize_html(text);
+    parse_customemojis(&html, &emojis)
+}
+
+fn parse_code(line: &str) -> String {
+	todo!();
+}
+
 fn parse_url(line: &str) -> String {
-    let url_regex = Regex::new(r"\bhttps://\S+").unwrap();
-    let replaced_line = url_regex.replace_all(&line, |caps: &Captures| {
+    let regex = Regex::new(r"\bhttps://\S+").unwrap();
+    let replaced_line = regex.replace_all(&line, |caps: &Captures| {
         let url = caps.get(0).unwrap().as_str();
         format!("<a href=\"{}\">{}</a>", url, url)
     });
