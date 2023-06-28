@@ -47,7 +47,7 @@ fn sanitize_html(text: &str) -> String {
 }
 
 fn parse_url(line: &str) -> String {
-    let url_regex = Regex::new(r"\bhttps://\S+").unwrap();
+    let url_regex = Regex::new(r"https://\S+").unwrap();
     let replaced_line = url_regex.replace_all(&line, |caps: &Captures| {
         let url = caps.get(0).unwrap().as_str();
         format!("<a href=\"{}\">{}</a>", url, url)
