@@ -52,7 +52,10 @@ pub async fn fetch_notes(
         deserialized.reverse();
     }
 
-    super::note_modifier::modify_notes(deserialized).await
+    for note in &mut deserialized {
+        super::note_modifier::modify_notes(note).await;
+    }
+    deserialized
 }
 
 #[tauri::command]

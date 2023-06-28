@@ -7,58 +7,55 @@ use super::{
 use chrono::{DateTime, Datelike, Duration, Local};
 use std::collections::HashMap;
 
-pub(crate) async fn modify_notes(mut res: Vec<Note>) -> Vec<Note> {
-    for note in &mut res {
-        note.modifiedEmojis = Some(Reactions::new());
-        for (reaction, count) in &note.reactions {
-            let reaction = Reaction {
-                name: reaction.to_string(),
-                url: if reaction.starts_with(':') {
-                    if let Some(url) = note.reactionEmojis.get(&reaction[1..reaction.len() - 1]) {
-                        url.to_string()
-                    } else {
-                        add_emojis(&reaction[1..reaction.len() - 3])
-                    }
+pub(crate) async fn modify_notes(note: &mut Note) {
+    note.modifiedEmojis = Some(Reactions::new());
+    for (reaction, count) in &note.reactions {
+        let reaction = Reaction {
+            name: reaction.to_string(),
+            url: if reaction.starts_with(':') {
+                if let Some(url) = note.reactionEmojis.get(&reaction[1..reaction.len() - 1]) {
+                    url.to_string()
                 } else {
-                    String::new()
-                },
-                count: *count,
-            };
-            if let Some(ref mut emojis) = note.modifiedEmojis {
-                emojis.add_reaction(reaction);
-            }
+                    add_emojis(&reaction[1..reaction.len() - 3])
+                }
+            } else {
+                String::new()
+            },
+            count: *count,
+        };
+        if let Some(ref mut emojis) = note.modifiedEmojis {
+            emojis.add_reaction(reaction);
         }
-        note.reactionEmojis.clear();
-        note.modifiedCreatedAt = Some(format_datetime(&note.createdAt));
-        note.user.name = Some(parse_username(
-            note.user.name.as_ref().unwrap_or(&note.user.username),
-            &note.user.emojis,
-            note.user.host.is_none(),
-        ));
-        if let Some(ref mut renote) = &mut note.renote {
-            if let Some(text) = &renote.text {
-                renote.text = Some(parse_text(
-                    &text,
-                    &renote.emojis.as_ref().unwrap_or(&HashMap::new()),
-                    renote.user.host.is_none(),
-                ));
-            }
-            renote.modifiedCreatedAt = Some(format_datetime(&renote.createdAt));
-            renote.user.name = Some(parse_username(
-                renote.user.name.as_ref().unwrap_or(&renote.user.username),
-                &renote.user.emojis,
+    }
+    note.reactionEmojis.clear();
+    note.modifiedCreatedAt = Some(format_datetime(&note.createdAt));
+    note.user.name = Some(parse_username(
+        note.user.name.as_ref().unwrap_or(&note.user.username),
+        &note.user.emojis,
+        note.user.host.is_none(),
+    ));
+    if let Some(ref mut renote) = &mut note.renote {
+        if let Some(text) = &renote.text {
+            renote.text = Some(parse_text(
+                &text,
+                &renote.emojis.as_ref().unwrap_or(&HashMap::new()),
                 renote.user.host.is_none(),
             ));
         }
-        if let Some(text) = note.text.take() {
-            note.text = Some(parse_text(
-                &text,
-                &note.emojis.as_ref().unwrap_or(&HashMap::new()),
-                note.user.host.is_none(),
-            ));
-        }
+        renote.modifiedCreatedAt = Some(format_datetime(&renote.createdAt));
+        renote.user.name = Some(parse_username(
+            renote.user.name.as_ref().unwrap_or(&renote.user.username),
+            &renote.user.emojis,
+            renote.user.host.is_none(),
+        ));
     }
-    res
+    if let Some(text) = note.text.take() {
+        note.text = Some(parse_text(
+            &text,
+            &note.emojis.as_ref().unwrap_or(&HashMap::new()),
+            note.user.host.is_none(),
+        ));
+    }
 }
 
 fn format_datetime(datetime_str: &str) -> String {
