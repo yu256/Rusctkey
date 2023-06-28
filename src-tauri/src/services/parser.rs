@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 
-use ammonia::Builder;
+use html_escape::encode_text;
 use regex::{Captures, Regex};
 
 use super::service::add_emojis;
 
 pub(crate) fn parse_text(text: &str, emojis: &HashMap<String, String>, is_local: bool) -> String {
-    let html = sanitize_html(text);
     let mut parsed_text = String::new();
 
-    let lines: Vec<&str> = html.lines().collect();
+    let encoded = encode_text(text);
+    let lines: Vec<&str> = encoded.lines().collect();
 
     for line in lines {
         let line = parse_url(&line);
@@ -31,24 +31,9 @@ pub(crate) fn parse_text(text: &str, emojis: &HashMap<String, String>, is_local:
     parsed_text
 }
 
-pub(crate) fn parse_username(
-    text: &str,
-    emojis: &HashMap<String, String>,
-    is_local: bool,
-) -> String {
-    let html = sanitize_html(text);
-    parse_customemojis(&html, &emojis, is_local)
-}
-
-fn sanitize_html(text: &str) -> String {
-    let builder = Builder::default();
-
-    builder.clean(text).to_string()
-}
-
 fn parse_url(line: &str) -> String {
-    let url_regex = Regex::new(r"https://\S+").unwrap();
-    let replaced_line = url_regex.replace_all(&line, |caps: &Captures| {
+    let regex = Regex::new(r"https://\S+").unwrap();
+    let replaced_line = regex.replace_all(&line, |caps: &Captures| {
         let url = caps.get(0).unwrap().as_str();
         format!("<a href=\"{}\">{}</a>", url, url)
     });
@@ -68,7 +53,11 @@ fn parse_search_links(line: &str) -> String {
     replaced_line.to_string()
 }
 
-fn parse_customemojis(line: &str, emojis: &HashMap<String, String>, is_local: bool) -> String {
+pub(crate) fn parse_customemojis(
+    line: &str,
+    emojis: &HashMap<String, String>,
+    is_local: bool,
+) -> String {
     let regex = Regex::new(r":(\w+):").unwrap();
     let replaced_line = regex.replace_all(line, |caps: &Captures| {
         let emoji_code = caps.get(1).unwrap().as_str();

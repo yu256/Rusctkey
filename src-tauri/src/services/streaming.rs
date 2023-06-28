@@ -25,10 +25,9 @@ pub struct Body {
 pub async fn streaming(app_handle: tauri::AppHandle) {
     let url: &str = &URL;
     let token: &str = &TOKEN;
-    let target_url = format!("wss://{}/streaming?i={}", url, token);
-    let parsed_url: reqwest::Url = target_url.parse().unwrap();
+    let stream_url = format!("wss://{}/streaming?i={}", url, token);
 
-    let (stream, _) = connect_async(parsed_url).await.expect("Failed to connect");
+    let (stream, _) = connect_async(stream_url).await.expect("Failed to connect");
 
     let (mut write, read) = stream.split();
 

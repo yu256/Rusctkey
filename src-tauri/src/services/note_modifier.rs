@@ -1,10 +1,11 @@
 use super::{
     modules::note::{Reaction, Reactions},
-    parser::{parse_text, parse_username},
+    parser::{parse_customemojis, parse_text},
     service::add_emojis,
     Note,
 };
 use chrono::{DateTime, Datelike, Duration, Local};
+use html_escape::encode_text;
 use std::collections::HashMap;
 
 pub(crate) async fn modify_notes(note: &mut Note) {
@@ -29,8 +30,8 @@ pub(crate) async fn modify_notes(note: &mut Note) {
     }
     note.reactionEmojis.clear();
     note.modifiedCreatedAt = Some(format_datetime(&note.createdAt));
-    note.user.name = Some(parse_username(
-        note.user.name.as_ref().unwrap_or(&note.user.username),
+    note.user.name = Some(parse_customemojis(
+        &encode_text(note.user.name.as_ref().unwrap_or(&note.user.username)),
         &note.user.emojis,
         note.user.host.is_none(),
     ));
@@ -43,8 +44,8 @@ pub(crate) async fn modify_notes(note: &mut Note) {
             ));
         }
         renote.modifiedCreatedAt = Some(format_datetime(&renote.createdAt));
-        renote.user.name = Some(parse_username(
-            renote.user.name.as_ref().unwrap_or(&renote.user.username),
+        renote.user.name = Some(parse_customemojis(
+            &encode_text(renote.user.name.as_ref().unwrap_or(&renote.user.username)),
             &renote.user.emojis,
             renote.user.host.is_none(),
         ));
