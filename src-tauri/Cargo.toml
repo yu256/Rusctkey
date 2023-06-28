@@ -22,6 +22,8 @@ async-std = { version = "1.12.0", features = [ "tokio1" ] }
 chrono = "0.4.26"
 ammonia = "3.3.0"
 regex = "1.8.4"
+tokio-tungstenite = { version = "*", features = ["native-tls"] }
+futures = "*"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem

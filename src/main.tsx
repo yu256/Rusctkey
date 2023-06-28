@@ -7,8 +7,4 @@ import { invoke } from "@tauri-apps/api";
 
 ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
-).render(
-  <React.StrictMode>
-    {(await invoke("check_is_logged_in")) ? <App /> : <Login />}
-  </React.StrictMode>
-);
+).render((await invoke("check_is_logged_in")) ? <App /> : <Login />);
