@@ -25,7 +25,7 @@ export interface Renote {
   modifiedCreatedAt: string;
   user: User;
   text?: string;
-  reactions: Reactions[];
+  modifiedEmojis?: Reactions;
   files: Files[];
 }
 

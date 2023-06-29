@@ -9,26 +9,11 @@ use html_escape::encode_text;
 use std::collections::HashMap;
 
 pub(crate) async fn modify_notes(note: &mut Note) {
-    note.modifiedEmojis = Some(Reactions::new());
-    for (reaction, count) in &note.reactions {
-        let reaction = Reaction {
-            name: reaction.to_string(),
-            url: if reaction.starts_with(':') {
-                if let Some(url) = note.reactionEmojis.get(&reaction[1..reaction.len() - 1]) {
-                    url.to_string()
-                } else {
-                    add_emojis(&reaction[1..reaction.len() - 3])
-                }
-            } else {
-                String::new()
-            },
-            count: *count,
-        };
-        if let Some(ref mut emojis) = note.modifiedEmojis {
-            emojis.add_reaction(reaction);
-        }
-    }
-    note.reactionEmojis.clear();
+    modify_reactions(
+        &mut note.modifiedEmojis,
+        &mut note.reactions,
+        &mut note.reactionEmojis,
+    );
     note.modifiedCreatedAt = Some(format_datetime(&note.createdAt));
     note.user.name = Some(parse_customemojis(
         &encode_text(note.user.name.as_ref().unwrap_or(&note.user.username)),
@@ -49,6 +34,11 @@ pub(crate) async fn modify_notes(note: &mut Note) {
             &renote.user.emojis,
             renote.user.host.is_none(),
         ));
+        modify_reactions(
+            &mut renote.modifiedEmojis,
+            &mut renote.reactions,
+            &mut renote.reactionEmojis,
+        );
     }
     if let Some(text) = note.text.take() {
         note.text = Some(parse_text(
@@ -57,6 +47,31 @@ pub(crate) async fn modify_notes(note: &mut Note) {
             note.user.host.is_none(),
         ));
     }
+}
+
+fn modify_reactions(
+    emojis: &mut Option<Reactions>,
+    reactions: &mut HashMap<String, usize>,
+    reaction_emojis: &mut HashMap<String, String>,
+) {
+    let emojis = emojis.get_or_insert_with(Reactions::new);
+    for (reaction, count) in reactions {
+        let reaction = Reaction {
+            name: reaction.to_string(),
+            url: if reaction.starts_with(':') {
+                if let Some(url) = reaction_emojis.get(&reaction[1..reaction.len() - 1]) {
+                    url.to_string()
+                } else {
+                    add_emojis(&reaction[1..reaction.len() - 3])
+                }
+            } else {
+                String::new()
+            },
+            count: *count,
+        };
+        emojis.add_reaction(reaction);
+    }
+    reaction_emojis.clear();
 }
 
 fn format_datetime(datetime_str: &str) -> String {

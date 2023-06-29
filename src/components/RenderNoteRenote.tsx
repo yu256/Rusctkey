@@ -1,4 +1,5 @@
 import { Renote } from "../interfaces/note";
+import RenderReactions from "./RenderReactions";
 
 interface Props {
   note: Renote;
@@ -57,6 +58,11 @@ function RenderNoteRenote({ note, full }: Props): JSX.Element {
               </div>
             ))}
           </div>
+        )}
+        {note.modifiedEmojis && full && (
+          <RenderReactions
+            reactions={note.modifiedEmojis.reactions}
+          />
         )}
       </div>
     </div>
