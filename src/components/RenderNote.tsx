@@ -1,5 +1,6 @@
 import { Note } from "../interfaces/note";
 import RenderNoteRenote from "./RenderNoteRenote";
+import RenderReactions from "./RenderReactions";
 
 interface Props {
   note: Note;
@@ -71,25 +72,9 @@ function RenderNote({ note }: Props): JSX.Element {
           </div>
         )}
         {note.modifiedEmojis && (
-          <div className="flex gap-1">
-            {note.modifiedEmojis.reactions.map((reaction) => (
-              <div
-                key={reaction.name}
-                className="flex items-center mt-2"
-              >
-                {reaction.url ? (
-                  <img
-                    className="w-auto h-5 max-w-full mr-1"
-                    src={reaction.url}
-                    alt={reaction.name}
-                  />
-                ) : (
-                  <span className="mr-1">{reaction.name}</span>
-                )}
-                {reaction.count}
-              </div>
-            ))}
-          </div>
+          <RenderReactions
+            reactions={note.modifiedEmojis.reactions}
+          />
         )}
       </div>
     </li>

@@ -13,7 +13,7 @@ interface Reactions {
   reactions: Reaction[];
 }
 
-interface Reaction {
+export interface Reaction {
   name: string;
   url: string;
   count: number;
