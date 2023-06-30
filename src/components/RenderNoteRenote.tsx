@@ -44,7 +44,7 @@ function RenderNoteRenote({ note, full }: Props): JSX.Element {
             />
           )}
         </div>
-        {note.files && <RenderFiles files={note.files} />}
+        <RenderFiles files={note.files} />
         {note.modifiedEmojis && full && (
           <RenderReactions
             reactions={note.modifiedEmojis.reactions}

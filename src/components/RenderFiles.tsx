@@ -26,12 +26,7 @@ function RenderFiles({ files }: Props) {
         </div>
       );
     if (file.type.startsWith("audio"))
-      return (
-        <audio
-          src={file.url}
-		  controls
-        />
-      );
+      return <audio src={file.url} controls />;
     return <>{file.name}</>;
   }
   return (
