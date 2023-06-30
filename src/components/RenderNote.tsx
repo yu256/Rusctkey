@@ -1,4 +1,5 @@
 import { Note } from "../interfaces/note";
+import RenderFiles from "./RenderFiles";
 import RenderNoteRenote from "./RenderNoteRenote";
 import RenderReactions from "./RenderReactions";
 import RenderTime from "./RenderTime";
@@ -47,26 +48,10 @@ function RenderNote({ note }: Props): JSX.Element {
             <div
               className="mt-1"
               dangerouslySetInnerHTML={{ __html: note.text }}
-            ></div>
+            />
           )}
         </div>
-        {note.files && (
-          <div className="flex flex-wrap">
-            {note.files.map((file) => (
-              <div
-                key={file.id}
-                className="m-1 relative w-64 h-36 bg-gray-500"
-              >
-                <img
-                  key={file.id}
-                  src={file.thumbnailUrl}
-                  alt={file.name}
-                  className="w-full h-full object-contain absolute"
-                />
-              </div>
-            ))}
-          </div>
-        )}
+        {note.files && <RenderFiles files={note.files} />}
         {note.renote && (
           <div className="min-h-[7em] border-2 p-3 ml-1 mr-1 rounded-3xl border-black border-dashed relative">
             <RenderNoteRenote note={note.renote} />

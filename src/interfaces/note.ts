@@ -27,7 +27,7 @@ export interface Renote {
   files: Files[];
 }
 
-interface Files {
+export interface Files {
   id: string;
   createdAt: string;
   name?: string;
