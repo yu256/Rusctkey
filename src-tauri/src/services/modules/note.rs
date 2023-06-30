@@ -11,7 +11,7 @@ pub struct Note {
     pub reactions: HashMap<String, usize>,
     pub reactionEmojis: HashMap<String, String>,
     pub modifiedEmojis: Option<Reactions>,
-    pub files: Vec<Files>,
+    pub files: Vec<File>,
     pub renote: Option<Renote>,
     pub emojis: Option<HashMap<String, String>>,
 }
@@ -49,13 +49,13 @@ pub struct Renote {
     pub reactions: HashMap<String, usize>,
     pub reactionEmojis: HashMap<String, String>,
     pub modifiedEmojis: Option<Reactions>,
-    pub files: Vec<Files>,
+    pub files: Vec<File>,
     pub emojis: Option<HashMap<String, String>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-pub struct Files {
+pub struct File {
     pub id: String,
     pub createdAt: String,
     pub name: String,

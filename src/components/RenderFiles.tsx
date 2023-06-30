@@ -1,24 +1,43 @@
-import { Files } from "../interfaces/note";
+import { File } from "../interfaces/note";
 
 interface Props {
-  files: Files[];
+  files: File[];
 }
 
 function RenderFiles({ files }: Props) {
-  return (
-    <div className="flex flex-wrap">
-      {files.map((file) => (
+  function parseFiles(file: File) {
+    if (file.type.startsWith("image"))
+      return (
         <div
           key={file.id}
           className="m-1 relative w-64 h-36 bg-gray-500"
         >
           <img
-            key={file.id}
+            className="w-full h-full object-contain absolute"
             src={file.thumbnailUrl}
             alt={file.name}
-            className="w-full h-full object-contain absolute"
           />
         </div>
+      );
+    if (file.type.startsWith("video"))
+      return (
+        <div key={file.id} className="m-1 w-64 h-36">
+          <video src={file.url} controls />
+        </div>
+      );
+    if (file.type.startsWith("audio"))
+      return (
+        <audio
+          src={file.url}
+		  controls
+        />
+      );
+    return <>{file.name}</>;
+  }
+  return (
+    <div className="flex flex-wrap">
+      {files.map((file) => (
+        <>{parseFiles(file)}</>
       ))}
     </div>
   );

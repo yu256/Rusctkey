@@ -4,7 +4,7 @@ export interface Note {
   user: User;
   text?: string;
   modifiedEmojis?: Reactions;
-  files: Files[];
+  files: File[];
   renote?: Renote;
 }
 
@@ -24,10 +24,10 @@ export interface Renote {
   user: User;
   text?: string;
   modifiedEmojis?: Reactions;
-  files: Files[];
+  files: File[];
 }
 
-export interface Files {
+export interface File {
   id: string;
   createdAt: string;
   name?: string;
