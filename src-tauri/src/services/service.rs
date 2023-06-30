@@ -86,7 +86,7 @@ pub(crate) fn add_emojis(name: &str) -> String {
     url.unwrap_or(String::new())
 }
 
-pub fn read_file_to_bytes(file_path: PathBuf) -> Result<Vec<u8>, Error> {
+pub fn read_file_to_bytes(file_path: &PathBuf) -> Result<Vec<u8>, Error> {
     let mut file: BufReader<File> = open_file(&file_path)?;
     let mut buffer: Vec<u8> = Vec::new();
     file.read_to_end(&mut buffer)?;

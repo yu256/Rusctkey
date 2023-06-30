@@ -1,11 +1,9 @@
+use reqwest::multipart;
+use serde_json::json;
 use std::{
     fs::{self, File},
     io::{BufWriter, Write},
 };
-
-use chrono::Local;
-use reqwest::multipart;
-use serde_json::json;
 use tauri::api::dialog::{FileDialogBuilder, MessageDialogBuilder};
 
 use super::{
@@ -143,19 +141,20 @@ pub async fn upload_files() -> Vec<DriveFile> {
     });
 
     FileDialogBuilder::new().pick_files(move |file_paths: Option<Vec<std::path::PathBuf>>| {
-        if let Some(v) = file_paths {
+        if let Some(paths) = file_paths {
             async_std::task::spawn(async move {
                 let mut drive_file: Vec<DriveFile> = Vec::new();
-                for path in v {
+                for path in paths {
                     let access_token: &str = &TOKEN;
                     let url: &str = &URL;
-                    let file_bytes = read_file_to_bytes(path).unwrap();
-                    let now = Local::now().format("%Y%m%d-%H:%M:%S");
+                    let file_bytes = read_file_to_bytes(&path).unwrap();
+                    let file_name = path.file_name().unwrap();
 
                     let form: multipart::Form =
                         multipart::Form::new().text("i", access_token).part(
                             "file",
-                            multipart::Part::bytes(file_bytes).file_name(format!("{}", now)),
+                            multipart::Part::bytes(file_bytes)
+                                .file_name(file_name.to_string_lossy().to_string()),
                         );
 
                     let res: DriveFile = client
