@@ -1,7 +1,6 @@
 export interface Note {
   id: string;
   createdAt: string;
-  modifiedCreatedAt: string;
   user: User;
   text?: string;
   modifiedEmojis?: Reactions;
@@ -22,7 +21,6 @@ export interface Reaction {
 export interface Renote {
   id: string;
   createdAt: string;
-  modifiedCreatedAt: string;
   user: User;
   text?: string;
   modifiedEmojis?: Reactions;

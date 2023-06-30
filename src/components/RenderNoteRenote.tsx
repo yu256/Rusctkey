@@ -1,5 +1,6 @@
 import { Renote } from "../interfaces/note";
 import RenderReactions from "./RenderReactions";
+import RenderTime from "./RenderTime";
 
 interface Props {
   note: Renote;
@@ -20,7 +21,7 @@ function RenderNoteRenote({ note, full }: Props): JSX.Element {
           full ? "absolute top-0 right-0" : "absolute right-3 top-3"
         }
       >
-        {note.modifiedCreatedAt}
+        <RenderTime createdAt={note.createdAt} />
       </div>
       <div className="ml-24">
         <div className="text-left">

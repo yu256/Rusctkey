@@ -1,6 +1,7 @@
 import { Note } from "../interfaces/note";
 import RenderNoteRenote from "./RenderNoteRenote";
 import RenderReactions from "./RenderReactions";
+import RenderTime from "./RenderTime";
 
 interface Props {
   note: Note;
@@ -16,7 +17,7 @@ function RenderNote({ note }: Props): JSX.Element {
         />
       </div>
       <div className="absolute right-3 top-3">
-        {note.modifiedCreatedAt}
+        <RenderTime createdAt={note.createdAt} />
       </div>
       <span dangerouslySetInnerHTML={{ __html: note.user.name }} />
       がRenote
@@ -31,7 +32,7 @@ function RenderNote({ note }: Props): JSX.Element {
         />
       </div>
       <div className="absolute right-3 top-3">
-        {note.modifiedCreatedAt}
+        <RenderTime createdAt={note.createdAt} />
       </div>
       <div className="ml-24">
         <div className="text-left">

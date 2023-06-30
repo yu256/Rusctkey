@@ -5,7 +5,6 @@ pub(crate) fn err_notes() -> Vec<Note> {
     vec![Note {
         id: String::new(),
         createdAt: String::new(),
-        modifiedCreatedAt: None,
         user: User {
             username: String::new(),
             host: None,

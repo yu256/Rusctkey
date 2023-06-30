@@ -6,7 +6,6 @@ use std::collections::HashMap;
 pub struct Note {
     pub id: String,
     pub createdAt: String,
-    pub modifiedCreatedAt: Option<String>,
     pub user: User,
     pub text: Option<String>,
     pub reactions: HashMap<String, usize>,
@@ -45,7 +44,6 @@ impl Reactions {
 pub struct Renote {
     pub id: String,
     pub createdAt: String,
-    pub modifiedCreatedAt: Option<String>,
     pub user: User,
     pub text: Option<String>,
     pub reactions: HashMap<String, usize>,
