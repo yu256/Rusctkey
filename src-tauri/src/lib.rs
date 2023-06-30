@@ -38,7 +38,7 @@ impl AppBuilder {
             .setup(move |app| {
                 let app_handle = app.app_handle();
                 std::thread::spawn(move || {
-                    tauri::async_runtime::block_on(streaming(app_handle));
+                    tauri::async_runtime::spawn(streaming(app_handle));
                 });
                 Ok(())
             })
