@@ -32,7 +32,7 @@ pub(crate) fn parse_text(text: &str, emojis: &HashMap<String, String>, is_local:
 }
 
 fn parse_url(line: &str) -> String {
-    let regex = Regex::new(r"https://\S+").unwrap();
+    let regex = Regex::new(r"https?://\S+").unwrap();
     let replaced_line = regex.replace_all(&line, |caps: &Captures| {
         let url = caps.get(0).unwrap().as_str();
         format!("<a href=\"{}\">{}</a>", url, url)

@@ -169,7 +169,7 @@ pub async fn upload_files() -> Vec<DriveFile> {
 
                     drive_file.push(res);
                 }
-                let _ = drive_file_tx.send(drive_file).await;
+                drive_file_tx.send(drive_file).await.unwrap();
             });
         }
     });
