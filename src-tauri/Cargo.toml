@@ -23,6 +23,7 @@ html-escape = "0.2.13"
 regex = "1.8.4"
 tokio-tungstenite = { version = "*", features = ["native-tls"] }
 futures = "*"
+vrchatapi = "1.12.0"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem

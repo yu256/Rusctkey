@@ -9,7 +9,7 @@ use tauri::api::dialog::{FileDialogBuilder, MessageDialogBuilder};
 use super::{
     defaults::err_notes,
     service::{fetch_emojis, read_file_to_bytes, DATAPATH, TOKEN, URL},
-    DriveFile, Note,
+    DriveFile, Note, vrchat_api,
 };
 
 #[tauri::command]
@@ -175,4 +175,9 @@ pub async fn upload_files() -> Vec<DriveFile> {
     });
 
     handle.await
+}
+
+#[tauri::command]
+pub async fn get_user() -> bool {
+	vrchat_api::vrchat_api()
 }

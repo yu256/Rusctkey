@@ -2,7 +2,7 @@ use tauri::{App, Manager};
 mod services;
 
 pub use crate::services::{
-    commands::{check_is_logged_in, fetch_notes, post, set_credentials, upload_files},
+    commands::{check_is_logged_in, fetch_notes, post, set_credentials, upload_files, get_user},
     streaming::streaming,
 };
 
@@ -47,7 +47,8 @@ impl AppBuilder {
                 set_credentials,
                 post,
                 upload_files,
-                fetch_notes
+                fetch_notes,
+				get_user
             ])
             .run(tauri::generate_context!())
             .expect("error while running tauri application");

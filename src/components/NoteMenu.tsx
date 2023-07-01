@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api";
 import { useState } from "react";
 import Modal from "react-modal";
 import { DriveFile } from "../interfaces/drivefile";
+import Widgets from "./Widget";
 
 Modal.setAppElement("#root");
 
@@ -88,6 +89,7 @@ function NoteMenu() {
           </div>
         )}
       </Modal>
+	  <Widgets />
     </>
   );
 }
