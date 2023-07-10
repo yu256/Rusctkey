@@ -1,9 +1,8 @@
-use tauri::{App, Manager};
+use tauri::App;
 mod services;
 
-pub use crate::services::{
-    commands::{check_is_logged_in, fetch_notes, post, set_credentials, upload_files},
-    streaming::streaming,
+pub use crate::services::commands::{
+    check_is_logged_in, fetch_notes, modify_note, post, set_credentials, upload_files,
 };
 
 #[cfg(mobile)]
@@ -35,19 +34,13 @@ impl AppBuilder {
 
     pub fn run(self) {
         tauri::Builder::default()
-            .setup(move |app| {
-                let app_handle = app.app_handle();
-                std::thread::spawn(move || {
-                    tauri::async_runtime::spawn(streaming(app_handle));
-                });
-                Ok(())
-            })
             .invoke_handler(tauri::generate_handler![
                 check_is_logged_in,
                 set_credentials,
                 post,
                 upload_files,
-                fetch_notes
+                fetch_notes,
+                modify_note
             ])
             .run(tauri::generate_context!())
             .expect("error while running tauri application");

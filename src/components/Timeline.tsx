@@ -2,8 +2,8 @@ import RenderNote from "./RenderNote";
 import { useEffect, useState } from "react";
 import { Note } from "../interfaces/note";
 import { invoke } from "@tauri-apps/api";
-import { listen } from "@tauri-apps/api/event";
-import { U } from "@tauri-apps/api/event-41a9edf5";
+import { streamingBody } from "../interfaces/stream";
+import { ws } from "../App";
 
 const untilDate = localStorage.getItem("untilDate");
 
@@ -21,20 +21,13 @@ function Timeline() {
     fetchNotes();
   }, []);
 
-  useEffect(() => {
-    let unlisten: U;
-    async function fetchNote() {
-      unlisten = await listen<Note>("timeline", (event) => {
-        setNotes((prevNotes) => [event.payload, ...prevNotes]);
-      });
-    }
-
-    fetchNote();
-
-    return () => {
-      if (unlisten) unlisten();
-    };
-  }, []);
+  ws.onmessage = async (event) => {
+    const streamingBody: streamingBody = JSON.parse(event.data);
+    const parsedNote = await invoke<Note>("modify_note", {
+      note: streamingBody.body.body,
+    });
+    setNotes((prevNotes) => [parsedNote, ...prevNotes]);
+  };
 
   async function loadMoreNotesUp() {
     if (!notes.length) return;
