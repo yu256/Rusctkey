@@ -8,10 +8,7 @@ function RenderFiles({ files }: Props) {
   function parseFiles(file: File) {
     if (file.type.startsWith("image"))
       return (
-        <div
-          key={file.id}
-          className="m-1 relative w-64 h-36 bg-gray-500"
-        >
+        <div className="m-1 relative w-64 h-36 bg-gray-500">
           <img
             className="w-full h-full object-contain absolute"
             src={file.thumbnailUrl}
@@ -21,7 +18,7 @@ function RenderFiles({ files }: Props) {
       );
     if (file.type.startsWith("video"))
       return (
-        <div key={file.id} className="m-1 w-64 h-36">
+        <div className="m-1 w-64 h-36">
           <video src={file.url} controls />
         </div>
       );
@@ -32,7 +29,7 @@ function RenderFiles({ files }: Props) {
   return (
     <div className="flex flex-wrap">
       {files.map((file) => (
-        <>{parseFiles(file)}</>
+        <span key={file.id}>{parseFiles(file)}</span>
       ))}
     </div>
   );
