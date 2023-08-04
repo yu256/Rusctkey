@@ -37,10 +37,10 @@ pub(crate) async fn modify_notes(note: &mut Note) {
             &mut renote.reactionEmojis,
         );
     }
-    if let Some(text) = note.text.take() {
+    if let Some(text) = &note.text {
         note.text = Some(parse_text(
             &text,
-            &note.emojis.as_ref().unwrap_or(&HashMap::new()),
+            note.emojis.as_ref().unwrap_or(&HashMap::new()),
             note.user.host.is_none(),
         ));
     }

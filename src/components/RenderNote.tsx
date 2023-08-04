@@ -9,58 +9,56 @@ interface Props {
 }
 
 function RenderNote({ note }: Props): JSX.Element {
-  return !note.text && !note.files[0] && note.renote ? (
+  const { createdAt, user, text, modifiedEmojis, files, renote } =
+    note;
+  return !text && !files.length && renote ? (
     <li className="min-h-[7em] border-2 p-3 mr-1 ml-1 border-pink-100 border-dashed relative">
       <div className="w-6 float-left">
         <img
-          src={note.user.avatarUrl}
+          src={user.avatarUrl}
           className="rounded-full aspect-square object-cover"
         />
       </div>
       <div className="absolute right-3 top-3">
-        <RenderTime createdAt={note.createdAt} />
+        <RenderTime createdAt={createdAt} />
       </div>
-      <span dangerouslySetInnerHTML={{ __html: note.user.name }} />
+      <span dangerouslySetInnerHTML={{ __html: user.name }} />
       がRenote
-      <RenderNoteRenote note={note.renote} full={true} />
+      <RenderNoteRenote note={renote} full />
     </li>
   ) : (
     <li className="min-h-[7em] border-2 p-3 mr-1 ml-1 border-pink-100 border-dashed relative">
       <div className="w-20 float-left">
         <img
-          src={note.user.avatarUrl}
+          src={user.avatarUrl}
           className="rounded-full aspect-square object-cover"
         />
       </div>
       <div className="absolute right-3 top-3">
-        <RenderTime createdAt={note.createdAt} />
+        <RenderTime createdAt={createdAt} />
       </div>
       <div className="ml-24">
         <div className="text-left">
-          <span
-            dangerouslySetInnerHTML={{ __html: note.user.name }}
-          />
+          <span dangerouslySetInnerHTML={{ __html: user.name }} />
           <span className="text-gray-400 ml-2">
-            {note.user.username}
-            {note.user.host && `@${note.user.host}`}
+            {user.username}
+            {user.host && `@${user.host}`}
           </span>
-          {note.text && (
+          {text && (
             <div
               className="mt-1"
-              dangerouslySetInnerHTML={{ __html: note.text }}
+              dangerouslySetInnerHTML={{ __html: text }}
             />
           )}
         </div>
-        <RenderFiles files={note.files} />
-        {note.renote && (
+        <RenderFiles files={files} />
+        {renote && (
           <div className="min-h-[7em] border-2 p-3 ml-1 mr-1 rounded-3xl border-black border-dashed relative">
-            <RenderNoteRenote note={note.renote} />
+            <RenderNoteRenote note={renote} />
           </div>
         )}
-        {note.modifiedEmojis && (
-          <RenderReactions
-            reactions={note.modifiedEmojis.reactions}
-          />
+        {modifiedEmojis && (
+          <RenderReactions reactions={modifiedEmojis.reactions} />
         )}
       </div>
     </li>
