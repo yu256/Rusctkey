@@ -1,6 +1,8 @@
-use anyhow::{Context, Result};
-use once_cell::sync::Lazy;
+use anyhow::{bail, Context as _, Result};
+use serde::{Deserialize, Serialize};
 use serde_json::json;
+use std::fs;
+use std::sync::LazyLock;
 use std::{
     fs::File,
     io::{BufReader, BufWriter, Read, Write},
@@ -8,54 +10,47 @@ use std::{
 };
 use tauri::api::path::cache_dir;
 
-pub static DATAPATH: Lazy<PathBuf> = Lazy::new(|| {
+pub static DATAPATH: LazyLock<PathBuf> = LazyLock::new(|| {
     let path = cache_dir().unwrap();
-    path.join(&path).join("com.yu256.rusctkey") // なぜか（Lazyのせい?）cache_dir().unwrap().join("com.yu256.rusctkey")とするとcache_dir().unwrap()の部分が空になる
+    path.join(&path).join("com.yu256.rusctkey") // なぜかcache_dir().unwrap().join("com.yu256.rusctkey")とするとcache_dir().unwrap()の部分が空になる
 });
 
-pub static URL: Lazy<String> = Lazy::new(|| {
-    let mut url = String::new();
-    match open_file(&DATAPATH.join("instance")) {
-        Ok(mut file) => {
-            file.read_to_string(&mut url).unwrap();
-            url
+#[derive(Serialize, Deserialize)]
+pub struct Data {
+    pub url: String,
+    pub token: String,
+}
+
+impl Data {
+    fn new() -> Self {
+        Self {
+            url: String::new(),
+            token: String::new(),
         }
-        Err(_) => String::new(),
     }
+}
+
+pub static DATA: LazyLock<Data> = LazyLock::new(|| match read_json::<Data>("data") {
+    Ok(conf) => conf,
+    Err(_) => Data::new(),
 });
 
-pub static TOKEN: Lazy<String> = Lazy::new(|| {
-    let mut url = String::new();
-    match open_file(&DATAPATH.join("i")) {
-        Ok(mut file) => {
-            file.read_to_string(&mut url).unwrap();
-            url
-        }
-        Err(_) => String::new(),
-    }
-});
+pub(crate) async fn fetch_emojis(url: &str, token: &str) -> Result<()> {
+    let client = reqwest::Client::new();
 
-pub(crate) async fn fetch_emojis(url: &str, token: &str) -> bool {
-    let client: reqwest::Client = reqwest::Client::new();
-
-    let res: Result<reqwest::Response, reqwest::Error> = client
+    let res = client
         .post(&format!("https://{}/api/emojis", url))
         .json(&json!({ "i": token }))
         .send()
-        .await;
+        .await?;
 
-    match res {
-        Ok(response) => {
-            if response.status().is_success() {
-                let json_body = response.text().await.unwrap();
-                let mut file = BufWriter::new(File::create(DATAPATH.join("emojis.json")).unwrap());
-                file.write_all(json_body.as_bytes()).unwrap();
-                true
-            } else {
-                false
-            }
-        }
-        Err(_) => false,
+    if res.status().is_success() {
+        let json_body = res.text().await?;
+        let mut file = BufWriter::new(File::create(DATAPATH.join("emojis.json"))?);
+        file.write_all(json_body.as_bytes())?;
+        Ok(())
+    } else {
+        bail!("{}", res.status());
     }
 }
 
@@ -79,6 +74,33 @@ pub(crate) fn add_emojis(name: &str) -> Result<String> {
     });
 
     Ok(url.unwrap_or(String::new()))
+}
+
+pub fn read_json<T>(name: &str) -> Result<T>
+where
+    T: for<'a> Deserialize<'a>,
+{
+    let mut file = open_file(&DATAPATH.join(format!("{}.json", name)))?;
+    let mut content = String::new();
+    file.read_to_string(&mut content)?;
+    Ok(serde_json::from_str(&content)?)
+}
+
+pub fn write_json<T>(data: &T, name: &str) -> Result<()>
+where
+    T: Serialize,
+{
+    let Ok(file) = File::create(&DATAPATH.join(format!("{}.json", name))) else {
+        fs::create_dir_all(&*DATAPATH)?;
+        return write_json(data, name);
+    };
+
+    let json = serde_json::to_string(&data)?;
+
+    let mut file = BufWriter::new(file);
+    file.write_all(json.as_bytes())?;
+
+    Ok(())
 }
 
 pub fn read_file_to_bytes(file_path: &PathBuf) -> Result<Vec<u8>> {

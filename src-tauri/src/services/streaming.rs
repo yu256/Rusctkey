@@ -1,7 +1,4 @@
-use super::{
-    note_modifier::modify_notes,
-    service::{TOKEN, URL},
-};
+use super::{note_modifier::modify_notes, service::DATA};
 use crate::services::Note;
 use anyhow::Result;
 use futures::{SinkExt, StreamExt};
@@ -25,9 +22,7 @@ pub struct Body {
 }
 
 pub async fn streaming(app_handle: tauri::AppHandle) -> Result<()> {
-    let url: &str = &URL;
-    let token: &str = &TOKEN;
-    let stream_url = format!("wss://{}/streaming?i={}", url, token);
+    let stream_url = format!("wss://{}/streaming?i={}", DATA.url, DATA.token);
 
     let (stream, _) = connect_async(stream_url).await?;
 

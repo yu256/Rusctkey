@@ -1,6 +1,6 @@
+#![feature(lazy_cell)]
 use tauri::{App, Manager};
 mod services;
-
 pub use crate::services::{
     commands::{check_is_logged_in, fetch_notes, post, set_credentials, upload_files},
     streaming::streaming,

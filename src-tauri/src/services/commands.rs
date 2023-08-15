@@ -1,14 +1,11 @@
 use reqwest::multipart;
 use serde_json::json;
-use std::{
-    fs::{self, File},
-    io::{BufWriter, Write},
-};
+use std::fs;
 use tauri::api::dialog::{FileDialogBuilder, MessageDialogBuilder};
 
 use super::{
     defaults::err_notes,
-    service::{fetch_emojis, read_file_to_bytes, DATAPATH, TOKEN, URL},
+    service::{fetch_emojis, read_file_to_bytes, write_json, Data, DATA, DATAPATH},
     DriveFile, Note,
 };
 
@@ -19,9 +16,8 @@ pub async fn fetch_notes(
     until_date: Option<String>,
 ) -> Vec<Note> {
     let client: reqwest::Client = reqwest::Client::new();
-    let url: &str = &URL;
 
-    let mut json_body = json!({ "i": *TOKEN, "limit": 20 });
+    let mut json_body = json!({ "i": DATA.token, "limit": 20 });
 
     if let Some(id) = until_id {
         json_body["untilId"] = json!(id);
@@ -37,12 +33,12 @@ pub async fn fetch_notes(
     }
 
     let request = client
-        .post(&format!("https://{}/api/notes/timeline", url))
+        .post(&format!("https://{}/api/notes/timeline", DATA.url))
         .json(&json_body);
 
-    let Ok(res) = request
-        .send()
-        .await else { return err_notes(); };
+    let Ok(res) = request.send().await else {
+        return err_notes();
+    };
 
     let mut deserialized: Vec<Note> = res.json().await.unwrap();
 
@@ -59,9 +55,8 @@ pub async fn fetch_notes(
 #[tauri::command]
 pub async fn post(text: Option<String>, files: Option<Vec<DriveFile>>) -> bool {
     let client: reqwest::Client = reqwest::Client::new();
-    let url: &str = &URL;
 
-    let mut json_body = json!({ "i": *TOKEN, "text": text });
+    let mut json_body = json!({ "i": DATA.token, "text": text });
 
     if let Some(drive_files) = files {
         let id: Vec<&str> = drive_files
@@ -72,7 +67,7 @@ pub async fn post(text: Option<String>, files: Option<Vec<DriveFile>>) -> bool {
     }
 
     let res: Result<reqwest::Response, reqwest::Error> = client
-        .post(&format!("https://{}/api/notes/create", url))
+        .post(&format!("https://{}/api/notes/create", DATA.url))
         .json(&json!(&json_body))
         .send()
         .await;
@@ -95,20 +90,23 @@ pub async fn set_credentials(instance: Option<String>, token: Option<String>) ->
                 &instance
             };
 
-            if fetch_emojis(url, &token).await {
-                let mut instance_file =
-                    BufWriter::new(File::create(DATAPATH.join("instance")).unwrap());
-                instance_file.write_all(url.as_bytes()).unwrap();
-                let mut token_file = BufWriter::new(File::create(DATAPATH.join("i")).unwrap());
-                token_file.write_all(token.as_bytes()).unwrap();
-                true
-            } else {
-                MessageDialogBuilder::new(
-                    "Error",
-                    "Invalid credentials or Network error occurred while connecting to server.",
-                )
-                .show(|_| {});
-                false
+            match fetch_emojis(url, &token).await {
+                Ok(_) => {
+                    let data = Data {
+                        url: url.to_string(),
+                        token,
+                    };
+                    write_json(&data, "data").unwrap();
+                    true
+                }
+                Err(_) => {
+                    MessageDialogBuilder::new(
+                        "Error",
+                        "Invalid credentials or Network error occurred while connecting to server.",
+                    )
+                    .show(|_| {});
+                    false
+                }
             }
         }
         _ => {
@@ -120,7 +118,7 @@ pub async fn set_credentials(instance: Option<String>, token: Option<String>) ->
 
 #[tauri::command]
 pub fn check_is_logged_in() -> bool {
-    if let Ok(metadata) = fs::metadata(&DATAPATH.join("instance")) {
+    if let Ok(metadata) = fs::metadata(&DATAPATH.join("data.json")) {
         metadata.is_file()
     } else {
         false
@@ -145,20 +143,17 @@ pub async fn upload_files() -> Vec<DriveFile> {
             async_std::task::spawn(async move {
                 let mut drive_file: Vec<DriveFile> = Vec::new();
                 for path in paths {
-                    let access_token: &str = &TOKEN;
-                    let url: &str = &URL;
                     let file_bytes = read_file_to_bytes(&path).unwrap();
                     let file_name = path.file_name().unwrap();
 
-                    let form: multipart::Form =
-                        multipart::Form::new().text("i", access_token).part(
-                            "file",
-                            multipart::Part::bytes(file_bytes)
-                                .file_name(file_name.to_string_lossy().to_string()),
-                        );
+                    let form: multipart::Form = multipart::Form::new().text("i", &DATA.token).part(
+                        "file",
+                        multipart::Part::bytes(file_bytes)
+                            .file_name(file_name.to_string_lossy().to_string()),
+                    );
 
                     let res: DriveFile = client
-                        .post(&format!("https://{}/api/drive/files/create", url))
+                        .post(&format!("https://{}/api/drive/files/create", DATA.url))
                         .multipart(form)
                         .send()
                         .await
