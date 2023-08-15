@@ -15,11 +15,7 @@
       "all": false,
       "dialog": {
         "open": true
-      },
-	  "fs": {
-		"readFile": true,
-		"scope": ["$APPLOCALDATA/*"]
-	  }
+      }
     },
     "bundle": {
       "active": true,

@@ -51,7 +51,7 @@ function RenderNote({ note }: Props): JSX.Element {
             />
           )}
         </div>
-        <RenderFiles files={files} />
+        {!!files.length && <RenderFiles files={files} />}
         {renote && (
           <div className="min-h-[7em] border-2 p-3 ml-1 mr-1 rounded-3xl border-black border-dashed relative">
             <RenderNoteRenote note={renote} />

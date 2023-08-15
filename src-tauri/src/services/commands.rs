@@ -8,7 +8,6 @@ use tauri::api::dialog::{FileDialogBuilder, MessageDialogBuilder};
 
 use super::{
     defaults::err_notes,
-    note_modifier::modify_notes,
     service::{fetch_emojis, read_file_to_bytes, DATAPATH, TOKEN, URL},
     DriveFile, Note,
 };
@@ -52,7 +51,7 @@ pub async fn fetch_notes(
     }
 
     for note in &mut deserialized {
-        super::note_modifier::modify_notes(note).await;
+        let _ = super::note_modifier::modify_notes(note).await;
     }
     deserialized
 }
@@ -176,10 +175,4 @@ pub async fn upload_files() -> Vec<DriveFile> {
     });
 
     handle.await
-}
-
-#[tauri::command]
-pub async fn modify_note(mut note: Note) -> Note {
-    modify_notes(&mut note).await;
-    note
 }

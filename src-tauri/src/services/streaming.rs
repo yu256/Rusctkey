@@ -1,67 +1,57 @@
-// use futures::{SinkExt, StreamExt};
-// use serde::{Deserialize, Serialize};
-// use serde_json::json;
-// use tauri::Manager;
-// use tokio_tungstenite::{connect_async, tungstenite::Message};
+use super::{
+    note_modifier::modify_notes,
+    service::{TOKEN, URL},
+};
+use crate::services::Note;
+use anyhow::Result;
+use futures::{SinkExt, StreamExt};
+use serde::{Deserialize, Serialize};
+use serde_json::json;
+use tauri::Manager;
+use tokio_tungstenite::{connect_async, tungstenite::Message};
 
-// use crate::services::Note;
+#[derive(Serialize, Deserialize, Debug)]
+#[allow(non_snake_case)]
+pub struct StreamingBody {
+    pub r#type: String,
+    pub body: Body,
+}
 
-// use super::service::{TOKEN, URL};
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Body {
+    pub id: String,
+    pub r#type: String,
+    pub body: Note,
+}
 
-// #[derive(Serialize, Deserialize, Debug)]
-// #[allow(non_snake_case)]
-// pub struct StreamingBody {
-//     pub r#type: String,
-//     pub body: Body,
-// }
+pub async fn streaming(app_handle: tauri::AppHandle) -> Result<()> {
+    let url: &str = &URL;
+    let token: &str = &TOKEN;
+    let stream_url = format!("wss://{}/streaming?i={}", url, token);
 
-// #[derive(Serialize, Deserialize, Debug)]
-// pub struct Body {
-//     pub id: String,
-//     pub r#type: String,
-//     pub body: Note,
-// }
+    let (stream, _) = connect_async(stream_url).await?;
 
-// pub async fn streaming(app_handle: tauri::AppHandle) {
-//     let url: &str = &URL;
-//     let token: &str = &TOKEN;
-//     let stream_url = format!("wss://{}/streaming?i={}", url, token);
+    let (mut write, mut read) = stream.split();
 
-//     let (stream, _) = connect_async(stream_url).await.expect("Failed to connect");
+    write
+        .send({
+            let message = json!({
+                "type": "connect",
+                "body": {
+                    "channel": "homeTimeline",
+                    "id": "1",
+                }
+            });
+            Message::Text(message.to_string())
+        })
+        .await?;
 
-//     let (mut write, read) = stream.split();
+    while let Some(message) = read.next().await {
+        if let Ok(mut body) = serde_json::from_str::<StreamingBody>(&message?.to_string()) {
+            modify_notes(&mut body.body.body).await?;
+            app_handle.emit_all("timeline", &body.body.body)?;
+        }
+    }
 
-//     write
-//         .send({
-//             let message = json!({
-//                 "type": "connect",
-//                 "body": {
-//                     "channel": "homeTimeline",
-//                     "id": "1",
-//                 }
-//             });
-//             Message::Text(message.to_string())
-//         })
-//         .await
-//         .unwrap();
-
-//     read.for_each(|message| async {
-//         let message = message.unwrap().to_text().unwrap().to_string();
-
-//         let mut streaming_body: StreamingBody =
-//             match serde_json::from_str::<StreamingBody>(message.as_str()) {
-//                 Ok(deserialized) => deserialized,
-//                 Err(error) => {
-//                     eprintln!("Error: {}", error);
-//                     todo!()
-//                 }
-//             };
-
-//         super::note_modifier::modify_notes(&mut streaming_body.body.body).await;
-
-//         app_handle
-//             .emit_all("timeline", &streaming_body.body.body)
-//             .unwrap();
-//     })
-//     .await;
-// }
+    Ok(())
+}

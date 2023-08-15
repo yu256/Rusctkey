@@ -1,8 +1,9 @@
+use anyhow::{Context, Result};
 use once_cell::sync::Lazy;
 use serde_json::json;
 use std::{
     fs::File,
-    io::{BufReader, BufWriter, Error, Read, Write},
+    io::{BufReader, BufWriter, Read, Write},
     path::PathBuf,
 };
 use tauri::api::path::cache_dir;
@@ -58,24 +59,18 @@ pub(crate) async fn fetch_emojis(url: &str, token: &str) -> bool {
     }
 }
 
-pub(crate) fn add_emojis(name: &str) -> String {
+pub(crate) fn add_emojis(name: &str) -> Result<String> {
     let path = DATAPATH.join("emojis.json");
 
-    let mut file = match open_file(&path) {
-        Ok(file) => file,
-        Err(_) => unreachable!(),
-    };
-
+    let mut file = open_file(&path)?;
     let mut content = String::new();
-    file.read_to_string(&mut content).unwrap();
+    file.read_to_string(&mut content)?;
 
-    let json: serde_json::Value = serde_json::from_str(&content).unwrap();
-    let emojis = json["emojis"]
-        .as_array()
-        .expect("emojis field does not exist in json.");
+    let json: serde_json::Value = serde_json::from_str(&content)?;
+    let emojis = json["emojis"].as_array().context("emojis is not array")?;
 
     let url = emojis.iter().find_map(|emoji| {
-        let emoji_name = emoji["name"].as_str().unwrap();
+        let emoji_name = emoji["name"].as_str()?;
         if emoji_name == name {
             emoji["url"].as_str().map(|url| url.to_string())
         } else {
@@ -83,17 +78,17 @@ pub(crate) fn add_emojis(name: &str) -> String {
         }
     });
 
-    url.unwrap_or(String::new())
+    Ok(url.unwrap_or(String::new()))
 }
 
-pub fn read_file_to_bytes(file_path: &PathBuf) -> Result<Vec<u8>, Error> {
+pub fn read_file_to_bytes(file_path: &PathBuf) -> Result<Vec<u8>> {
     let mut file: BufReader<File> = open_file(&file_path)?;
     let mut buffer: Vec<u8> = Vec::new();
     file.read_to_end(&mut buffer)?;
     Ok(buffer)
 }
 
-pub fn open_file(path: &PathBuf) -> Result<BufReader<File>, Error> {
+pub fn open_file(path: &PathBuf) -> Result<BufReader<File>> {
     let file = File::open(path)?;
     Ok(BufReader::new(file))
 }
